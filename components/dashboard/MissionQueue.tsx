@@ -1,0 +1,67 @@
+"use client";
+
+import { COLUMN_CONFIG, getTasksByStatus } from "@/lib/data";
+import type { TaskStatus } from "@/lib/data";
+import { TaskCard } from "./TaskCard";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+
+const columnDotColors: Record<TaskStatus, string> = {
+  inbox: "bg-amber-400",
+  assigned: "bg-blue-400",
+  in_progress: "bg-violet-400",
+  review: "bg-orange-400",
+  done: "bg-emerald-400",
+};
+
+export function MissionQueue() {
+  return (
+    <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      {/* Section Header */}
+      <div className="flex items-center gap-2 border-b border-dashed border-stone-300 px-4 py-3">
+        <span className="text-xs text-amber-500">✦</span>
+        <h2 className="text-xs font-bold uppercase tracking-widest text-stone-800">
+          Mission Queue
+        </h2>
+      </div>
+
+      {/* Kanban Columns */}
+      <div className="flex flex-1 overflow-hidden">
+        {COLUMN_CONFIG.map((col) => {
+          const columnTasks = getTasksByStatus(col.key);
+          return (
+            <div
+              key={col.key}
+              className="flex min-w-0 flex-1 flex-col border-r border-dashed border-stone-200 last:border-r-0"
+            >
+              {/* Column Header */}
+              <div className="flex items-center gap-2 border-b border-dashed border-stone-200 px-3 py-2.5">
+                <span
+                  className={`h-2 w-2 rounded-full ${columnDotColors[col.key]}`}
+                />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-600">
+                  {col.label}
+                </span>
+                <Badge
+                  variant="secondary"
+                  className="ml-auto flex h-5 min-w-[20px] items-center justify-center bg-stone-200/70 p-0 text-[10px] text-stone-500"
+                >
+                  {columnTasks.length}
+                </Badge>
+              </div>
+
+              {/* Column Tasks */}
+              <ScrollArea className="flex-1">
+                <div className="space-y-2 p-2">
+                  {columnTasks.map((task) => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
