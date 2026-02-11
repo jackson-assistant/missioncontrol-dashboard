@@ -6,6 +6,8 @@ import type { FeedEntry } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronRight } from "lucide-react";
+import { SectionHeader } from "./ui/section-header";
+import { EmptyState } from "./ui/empty-state";
 
 const feedTabs = [
   { key: "all", label: "All" },
@@ -29,10 +31,10 @@ function FeedItem({ entry }: { entry: FeedEntry }) {
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="text-xs leading-relaxed text-stone-700 dark:text-zinc-300">
+        <p className="text-xs leading-relaxed text-subtle">
           {entry.content}
         </p>
-        <span className="mt-0.5 block text-[10px] text-stone-400 dark:text-zinc-500">
+        <span className="mt-0.5 block text-[10px] text-muted-foreground">
           {agent.name} &middot; {entry.timestamp}
         </span>
       </div>
@@ -58,27 +60,31 @@ export function LiveFeed() {
     {} as Record<string, number>
   );
 
+  const tabClass = (isActive: boolean) =>
+    `rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+      isActive
+        ? "bg-stone-800 text-white dark:bg-zinc-200 dark:text-zinc-900"
+        : "text-dim hover:bg-stone-200 dark:hover:bg-zinc-800"
+    }`;
+
+  const pillClass = (isActive: boolean) =>
+    `flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors ${
+      isActive
+        ? "border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
+        : "border-stone-200 bg-muted text-dim hover:bg-stone-200 dark:border-zinc-700 dark:hover:bg-zinc-700"
+    }`;
+
   return (
-    <aside className="flex w-[320px] shrink-0 flex-col border-l border-dashed border-stone-300 bg-stone-50/50 dark:border-zinc-700 dark:bg-zinc-800/60">
-      {/* Section Header */}
-      <div className="flex items-center gap-2 border-b border-dashed border-stone-300 px-4 py-3 dark:border-zinc-700">
-        <span className="text-xs text-amber-500">✦</span>
-        <h2 className="text-xs font-bold uppercase tracking-widest text-stone-800 dark:text-zinc-100">
-          Live Feed
-        </h2>
-      </div>
+    <aside className="flex w-[320px] shrink-0 flex-col border-l border-dashed bg-stone-50/50 dark:bg-zinc-800/60">
+      <SectionHeader title="Live Feed" />
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1 border-b border-dashed border-stone-200 px-4 py-2 dark:border-zinc-700">
+      <div className="flex items-center gap-1 border-b border-dashed px-4 py-2">
         {feedTabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
-              activeTab === tab.key
-                ? "bg-stone-800 text-white dark:bg-zinc-200 dark:text-zinc-900"
-                : "text-stone-500 hover:bg-stone-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            }`}
+            className={tabClass(activeTab === tab.key)}
           >
             {tab.label}
           </button>
@@ -86,14 +92,10 @@ export function LiveFeed() {
       </div>
 
       {/* Agent Filter Pills */}
-      <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto border-b border-dashed border-stone-200 px-4 py-2 dark:border-zinc-700">
+      <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto border-b border-dashed px-4 py-2">
         <button
           onClick={() => setActiveAgent(null)}
-          className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors ${
-            !activeAgent
-              ? "border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
-              : "border-stone-200 bg-stone-100 text-stone-500 hover:bg-stone-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
-          }`}
+          className={pillClass(!activeAgent)}
         >
           All Agents
         </button>
@@ -103,11 +105,7 @@ export function LiveFeed() {
             onClick={() =>
               setActiveAgent(agent.id === activeAgent ? null : agent.id)
             }
-            className={`flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors ${
-              activeAgent === agent.id
-                ? "border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
-                : "border-stone-200 bg-stone-100 text-stone-500 hover:bg-stone-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
-            }`}
+            className={pillClass(activeAgent === agent.id)}
           >
             <span
               className="h-1.5 w-1.5 rounded-full"
@@ -119,7 +117,7 @@ export function LiveFeed() {
             )}
           </button>
         ))}
-        <button className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-stone-200 text-stone-500 transition-colors hover:bg-stone-300 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-600">
+        <button className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-dim transition-colors hover:bg-stone-300 dark:hover:bg-zinc-600">
           <ChevronRight className="h-3 w-3" />
         </button>
       </div>
@@ -132,9 +130,7 @@ export function LiveFeed() {
               <FeedItem key={entry.id} entry={entry} />
             ))
           ) : (
-            <div className="px-4 py-8 text-center text-xs text-stone-400 dark:text-zinc-500">
-              No activity to show
-            </div>
+            <EmptyState message="No activity to show" className="py-8" />
           )}
         </div>
       </ScrollArea>

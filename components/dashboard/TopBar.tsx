@@ -4,14 +4,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { agents, tasks } from "@/lib/data";
-import { FileText, LayoutDashboard, Activity, Terminal } from "lucide-react";
+import { FileText, LayoutDashboard, Activity, Terminal, CalendarClock, Settings } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 const navLinks = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/api-usage", label: "API Usage", icon: Activity },
   { href: "/logs", label: "Logs", icon: Terminal },
+  { href: "/schedules", label: "Schedules", icon: CalendarClock },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function TopBar() {
@@ -45,23 +49,23 @@ export function TopBar() {
       .toUpperCase();
 
   return (
-    <header className="flex items-center justify-between border-b border-dashed border-stone-300 bg-stone-50 px-6 py-3 dark:border-zinc-700 dark:bg-zinc-900">
+    <header className="flex items-center justify-between border-b border-dashed bg-background px-6 py-3">
       {/* Left: Logo + Product + Nav */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">🐾</span>
-          <h1 className="text-sm font-bold uppercase tracking-widest text-stone-800 dark:text-zinc-100">
+          <h1 className="text-sm font-bold uppercase tracking-widest text-foreground">
             Mission Control
           </h1>
         </div>
         <Badge
           variant="outline"
-          className="rounded-md border-stone-200 bg-stone-100 text-xs text-stone-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+          className="rounded-md border-input bg-accent text-xs text-dim"
         >
           Clawd
         </Badge>
 
-        <div className="mx-1 h-5 w-px bg-stone-300 dark:bg-zinc-700" />
+        <Separator orientation="vertical" className="mx-1 h-5" />
 
         <nav className="flex items-center gap-1">
           {navLinks.map((link) => {
@@ -74,7 +78,7 @@ export function TopBar() {
                 className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
                   isActive
                     ? "bg-stone-800 text-white dark:bg-zinc-200 dark:text-zinc-900"
-                    : "text-stone-500 hover:bg-stone-200 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    : "text-dim hover:bg-stone-200 dark:hover:bg-zinc-800"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -88,18 +92,18 @@ export function TopBar() {
       {/* Center: Stats */}
       <div className="flex items-center gap-12">
         <div className="flex flex-col items-center">
-          <span className="text-2xl font-bold text-stone-800 dark:text-zinc-100">
+          <span className="text-2xl font-bold text-foreground">
             {activeAgents}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-stone-400 dark:text-zinc-500">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             Agents Active
           </span>
         </div>
         <div className="flex flex-col items-center">
-          <span className="text-2xl font-bold text-stone-800 dark:text-zinc-100">
+          <span className="text-2xl font-bold text-foreground">
             {totalTasks}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-stone-400 dark:text-zinc-500">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
             Tasks in Queue
           </span>
         </div>
@@ -107,23 +111,27 @@ export function TopBar() {
 
       {/* Right: Docs + Theme + Clock + Status */}
       <div className="flex items-center gap-4">
-        <button className="flex items-center gap-1.5 rounded-full bg-stone-200/70 px-3.5 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-300 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-full bg-stone-200/70 text-xs text-subtle hover:bg-stone-300 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+        >
           <FileText className="h-3.5 w-3.5" />
           Docs
-        </button>
+        </Button>
         <ThemeToggle />
         <div className="flex flex-col items-end">
           {time ? (
             <>
-              <span className="font-mono text-lg font-bold leading-tight text-stone-800 tabular-nums dark:text-zinc-100">
+              <span className="font-mono text-lg font-bold leading-tight text-foreground tabular-nums">
                 {formatTime(time)}
               </span>
-              <span className="text-[10px] font-medium tracking-wider text-stone-400 dark:text-zinc-500">
+              <span className="text-[10px] font-medium tracking-wider text-muted-foreground">
                 {formatDate(time)}
               </span>
             </>
           ) : (
-            <span className="font-mono text-lg font-bold text-stone-800 dark:text-zinc-100">
+            <span className="font-mono text-lg font-bold text-foreground">
               --:--:--
             </span>
           )}

@@ -12,12 +12,12 @@ export function TaskCard({ task }: { task: Task }) {
         {task.status === "inbox" && (
           <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-400" />
         )}
-        <h3 className="text-sm font-semibold leading-tight text-stone-800 dark:text-zinc-100">
+        <h3 className="text-sm font-semibold leading-tight text-foreground">
           {task.title}
         </h3>
       </div>
 
-      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-stone-500 dark:text-zinc-400">
+      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-dim">
         {task.description}
       </p>
 
@@ -33,7 +33,7 @@ export function TaskCard({ task }: { task: Task }) {
               </AvatarFallback>
             </Avatar>
           )}
-          <span className="text-[10px] text-stone-400 dark:text-zinc-500">
+          <span className="text-[10px] text-muted-foreground">
             {task.createdAt}
           </span>
         </div>
@@ -45,7 +45,7 @@ export function TaskCard({ task }: { task: Task }) {
             <Badge
               key={tag}
               variant="secondary"
-              className="bg-stone-100 px-1.5 py-0 text-[10px] font-normal text-stone-500 dark:bg-zinc-700 dark:text-zinc-400"
+              className="bg-muted px-1.5 py-0 text-[10px] font-normal text-dim"
             >
               {tag}
             </Badge>

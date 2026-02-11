@@ -1,4 +1,5 @@
-//chatgpt generated
+// ── Types ────────────────────────────────────────────────────────────────────
+
 export type AgentRole = "LEAD" | "INT" | "SPC";
 export type AgentStatus = "WORKING" | "IDLE" | "OFFLINE";
 export type TaskStatus = "inbox" | "assigned" | "in_progress" | "review" | "done";
@@ -10,8 +11,8 @@ export interface Agent {
   role: AgentRole;
   status: AgentStatus;
   title: string;
-  avatar: string;   
-  color: string;    
+  avatar: string;
+  color: string;
 }
 
 export interface Task {
@@ -19,7 +20,7 @@ export interface Task {
   title: string;
   description: string;
   status: TaskStatus;
-  assignee?: string; 
+  assignee?: string;
   tags: string[];
   createdAt: string;
 }
@@ -32,6 +33,44 @@ export interface FeedEntry {
   timestamp: string;
 }
 
+// ── Agent Color Palette (15 rainbow-spaced, white-text safe) ─────────────────
+// Ordered for maximum early distinction: first 7 span the full spectrum.
+// Future agents just take the next slot.
+
+export const agentPalette = [
+  "#EF4444", //  1 — Red
+  "#3B82F6", //  2 — Blue
+  "#22C55E", //  3 — Green
+  "#F97316", //  4 — Orange
+  "#8B5CF6", //  5 — Violet
+  "#06B6D4", //  6 — Cyan
+  "#EC4899", //  7 — Pink
+  "#D97706", //  8 — Amber
+  "#6366F1", //  9 — Indigo
+  "#14B8A6", // 10 — Teal
+  "#D946EF", // 11 — Fuchsia
+  "#0EA5E9", // 12 — Sky
+  "#65A30D", // 13 — Lime
+  "#F43F5E", // 14 — Rose
+  "#A855F7", // 15 — Purple
+] as const;
+
+// ── Color Helpers ────────────────────────────────────────────────────────────
+
+/** Parse a hex color to {r, g, b} */
+export function hexToRgb(hex: string) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return m
+    ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) }
+    : { r: 0, g: 0, b: 0 };
+}
+
+/** Get an agent's color by id (falls back to neutral gray) */
+export function getAgentColor(agentId: string): string {
+  return agents.find((a) => a.id === agentId)?.color ?? "#71717A";
+}
+
+// ── Agents ───────────────────────────────────────────────────────────────────
 
 export const agents: Agent[] = [
   {
@@ -41,7 +80,7 @@ export const agents: Agent[] = [
     status: "WORKING",
     title: "Founder",
     avatar: "CL",
-    color: "#F5C542",
+    color: agentPalette[0], // Red
   },
   {
     id: "devbot",
@@ -50,7 +89,7 @@ export const agents: Agent[] = [
     status: "WORKING",
     title: "Developer Agent",
     avatar: "DB",
-    color: "#6C63FF",
+    color: agentPalette[1], // Blue
   },
   {
     id: "researchbot",
@@ -59,7 +98,7 @@ export const agents: Agent[] = [
     status: "WORKING",
     title: "Customer Research",
     avatar: "RB",
-    color: "#FF6B6B",
+    color: agentPalette[2], // Green
   },
   {
     id: "squadbot",
@@ -68,7 +107,7 @@ export const agents: Agent[] = [
     status: "WORKING",
     title: "Squad Lead",
     avatar: "SB",
-    color: "#4ECDC4",
+    color: agentPalette[3], // Orange
   },
   {
     id: "writebot",
@@ -77,7 +116,7 @@ export const agents: Agent[] = [
     status: "WORKING",
     title: "Content Writer",
     avatar: "WB",
-    color: "#FF8C42",
+    color: agentPalette[4], // Violet
   },
   {
     id: "mailbot",
@@ -86,7 +125,7 @@ export const agents: Agent[] = [
     status: "WORKING",
     title: "Email Marketing",
     avatar: "MB",
-    color: "#A8E6CF",
+    color: agentPalette[5], // Cyan
   },
   {
     id: "socialbot",
@@ -95,7 +134,7 @@ export const agents: Agent[] = [
     status: "WORKING",
     title: "Social Media",
     avatar: "SO",
-    color: "#DDA0DD",
+    color: agentPalette[6], // Pink
   },
 ];
 

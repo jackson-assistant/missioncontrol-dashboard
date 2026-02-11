@@ -5,7 +5,6 @@ import {
   logEntries,
   actionLabels,
   levelColors,
-  actionColors,
   getUniqueAgents,
   getUniqueActions,
   getUniqueLevels,
@@ -15,7 +14,11 @@ import {
 } from "@/lib/logs-data";
 import { agents } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageHeader } from "@/components/dashboard/ui/page-header";
+import { CodeBadge } from "@/components/dashboard/ui/code-badge";
+import { EmptyState } from "@/components/dashboard/ui/empty-state";
 import {
   Terminal,
   Filter,
@@ -26,6 +29,11 @@ import {
   Zap,
   Hash,
 } from "lucide-react";
+
+// ── Shared select style ────────────────────────────────────────────────────
+
+const selectClass =
+  "rounded-md border bg-card px-2 py-1 text-[11px] font-medium text-subtle outline-none";
 
 // ── Filter Bar ─────────────────────────────────────────────────────────────
 
@@ -53,16 +61,13 @@ function FilterBar({
     filters.agentId || filters.level || filters.action || filters.search;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-dashed border-stone-200 px-4 py-2.5 dark:border-zinc-700">
-      <Filter className="h-3.5 w-3.5 text-stone-400 dark:text-zinc-500" />
+    <div className="flex flex-wrap items-center gap-2 border-b border-dashed px-4 py-2.5">
+      <Filter className="h-3.5 w-3.5 text-muted-foreground" />
 
-      {/* Agent filter */}
       <select
         value={filters.agentId ?? ""}
-        onChange={(e) =>
-          onChange({ ...filters, agentId: e.target.value || null })
-        }
-        className="rounded-md border border-stone-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-600 outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        onChange={(e) => onChange({ ...filters, agentId: e.target.value || null })}
+        className={selectClass}
       >
         <option value="">All Agents</option>
         {uniqueAgents.map((id) => {
@@ -75,71 +80,49 @@ function FilterBar({
         })}
       </select>
 
-      {/* Level filter */}
       <select
         value={filters.level ?? ""}
-        onChange={(e) =>
-          onChange({
-            ...filters,
-            level: (e.target.value as LogLevel) || null,
-          })
-        }
-        className="rounded-md border border-stone-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-600 outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        onChange={(e) => onChange({ ...filters, level: (e.target.value as LogLevel) || null })}
+        className={selectClass}
       >
         <option value="">All Levels</option>
         {uniqueLevels.map((level) => (
-          <option key={level} value={level}>
-            {level.toUpperCase()}
-          </option>
+          <option key={level} value={level}>{level.toUpperCase()}</option>
         ))}
       </select>
 
-      {/* Action filter */}
       <select
         value={filters.action ?? ""}
-        onChange={(e) =>
-          onChange({
-            ...filters,
-            action: (e.target.value as LogAction) || null,
-          })
-        }
-        className="rounded-md border border-stone-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-600 outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        onChange={(e) => onChange({ ...filters, action: (e.target.value as LogAction) || null })}
+        className={selectClass}
       >
         <option value="">All Actions</option>
         {uniqueActions.map((action) => (
-          <option key={action} value={action}>
-            {actionLabels[action]}
-          </option>
+          <option key={action} value={action}>{actionLabels[action]}</option>
         ))}
       </select>
 
-      {/* Search */}
       <input
         type="text"
         placeholder="Search logs..."
         value={filters.search}
         onChange={(e) => onChange({ ...filters, search: e.target.value })}
-        className="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-[11px] text-stone-700 placeholder:text-stone-400 outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:placeholder:text-zinc-500"
+        className="rounded-md border bg-card px-2.5 py-1 text-[11px] text-subtle placeholder:text-muted-foreground outline-none"
       />
 
       {hasFilters && (
-        <button
-          onClick={() =>
-            onChange({
-              agentId: null,
-              level: null,
-              action: null,
-              search: "",
-            })
-          }
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-stone-400 transition-colors hover:text-stone-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+        <Button
+          variant="ghost"
+          size="xs"
+          onClick={() => onChange({ agentId: null, level: null, action: null, search: "" })}
+          className="text-muted-foreground"
         >
           <X className="h-3 w-3" />
           Clear
-        </button>
+        </Button>
       )}
 
-      <span className="ml-auto text-[10px] font-medium text-stone-400 dark:text-zinc-500">
+      <span className="ml-auto text-[10px] font-medium text-muted-foreground">
         {resultCount} entries
       </span>
     </div>
@@ -168,12 +151,10 @@ function LogRow({
           : "border-stone-100 hover:bg-stone-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
       }`}
     >
-      {/* Timestamp */}
-      <span className="w-[72px] shrink-0 font-mono text-[11px] tabular-nums text-stone-400 dark:text-zinc-500">
+      <span className="w-[72px] shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
         {log.timestamp}
       </span>
 
-      {/* Agent pill */}
       <div className="flex w-[90px] shrink-0 items-center gap-1.5">
         <span
           className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
@@ -181,54 +162,43 @@ function LogRow({
         >
           {agent?.avatar ?? "??"}
         </span>
-        <span className="truncate text-[11px] font-medium text-stone-700 dark:text-zinc-300">
+        <span className="truncate text-[11px] font-medium text-subtle">
           {log.agentName}
         </span>
       </div>
 
-      {/* Level badge */}
       <Badge
         className={`w-[54px] shrink-0 justify-center rounded px-1.5 py-0 text-[9px] font-bold uppercase ${levelColors[log.level]}`}
       >
         {log.level}
       </Badge>
 
-      {/* Action */}
-      <span
-        className={`w-[100px] shrink-0 truncate text-[11px] font-medium ${actionColors[log.action]}`}
-      >
+      <span className="w-[100px] shrink-0 truncate text-[11px] font-medium text-subtle">
         {actionLabels[log.action]}
       </span>
 
-      {/* Summary */}
-      <span className="min-w-0 flex-1 truncate text-[11px] text-stone-600 dark:text-zinc-400">
+      <span className="min-w-0 flex-1 truncate text-[11px] text-dim">
         {log.summary}
       </span>
 
-      {/* Meta badges */}
       <div className="flex shrink-0 items-center gap-2">
-        {log.model && (
-          <code className="rounded bg-stone-100 px-1.5 py-0.5 text-[9px] text-stone-500 dark:bg-zinc-700 dark:text-zinc-400">
-            {log.model}
-          </code>
-        )}
+        {log.model && <CodeBadge className="text-[9px]">{log.model}</CodeBadge>}
         {log.tokens !== undefined && log.tokens > 0 && (
-          <span className="font-mono text-[10px] text-stone-400 dark:text-zinc-500">
+          <span className="font-mono text-[10px] text-muted-foreground">
             {log.tokens.toLocaleString()}t
           </span>
         )}
         {log.latency !== undefined && (
-          <span className="font-mono text-[10px] text-stone-400 dark:text-zinc-500">
+          <span className="font-mono text-[10px] text-muted-foreground">
             {log.latency}ms
           </span>
         )}
       </div>
 
-      {/* Chevron */}
       <ChevronRight
         className={`h-3.5 w-3.5 shrink-0 transition-colors ${
           isSelected
-            ? "text-stone-500 dark:text-zinc-400"
+            ? "text-dim"
             : "text-stone-300 group-hover:text-stone-400 dark:text-zinc-700 dark:group-hover:text-zinc-500"
         }`}
       />
@@ -238,28 +208,38 @@ function LogRow({
 
 // ── Detail Panel ───────────────────────────────────────────────────────────
 
-function DetailPanel({
-  log,
-  onClose,
-}: {
-  log: LogEntry;
-  onClose: () => void;
-}) {
+function DetailPanel({ log, onClose }: { log: LogEntry; onClose: () => void }) {
   const agent = agents.find((a) => a.id === log.agentId);
 
+  const metaItems = [
+    log.model && { icon: Cpu, label: "Model", value: <CodeBadge>{log.model}</CodeBadge> },
+    log.tokens !== undefined && log.tokens > 0 && {
+      icon: Hash,
+      label: "Tokens",
+      value: <span className="font-mono font-medium text-subtle">{log.tokens.toLocaleString()}</span>,
+    },
+    log.latency !== undefined && {
+      icon: Clock,
+      label: "Latency",
+      value: <span className="font-mono font-medium text-subtle">{log.latency}ms</span>,
+    },
+    log.channel && {
+      icon: Zap,
+      label: "Channel",
+      value: <span className="font-medium text-subtle">{log.channel}</span>,
+    },
+  ].filter(Boolean) as { icon: typeof Cpu; label: string; value: React.ReactNode }[];
+
   return (
-    <div className="flex w-[380px] shrink-0 flex-col border-l border-dashed border-stone-300 bg-stone-50/50 dark:border-zinc-700 dark:bg-zinc-800/60">
+    <div className="flex w-[380px] shrink-0 flex-col border-l border-dashed bg-stone-50/50 dark:bg-zinc-800/60">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-dashed border-stone-200 px-4 py-3 dark:border-zinc-700">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-zinc-100">
+      <div className="flex items-center justify-between border-b border-dashed px-4 py-3">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
           Log Detail
         </h3>
-        <button
-          onClick={onClose}
-          className="rounded p-1 text-stone-400 transition-colors hover:bg-stone-200 hover:text-stone-600 dark:text-zinc-500 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
-        >
+        <Button variant="ghost" size="icon-xs" onClick={onClose}>
           <X className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </div>
 
       <ScrollArea className="flex-1">
@@ -273,10 +253,10 @@ function DetailPanel({
               {agent?.avatar ?? "??"}
             </span>
             <div>
-              <p className="text-sm font-semibold text-stone-800 dark:text-zinc-100">
+              <p className="text-sm font-semibold text-foreground">
                 {log.agentName}
               </p>
-              <p className="font-mono text-[11px] text-stone-400 dark:text-zinc-500">
+              <p className="font-mono text-[11px] text-muted-foreground">
                 {log.timestamp}
               </p>
             </div>
@@ -284,94 +264,54 @@ function DetailPanel({
 
           {/* Level + Action */}
           <div className="flex items-center gap-2">
-            <Badge
-              className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${levelColors[log.level]}`}
-            >
+            <Badge className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${levelColors[log.level]}`}>
               {log.level}
             </Badge>
-            <span
-              className={`text-xs font-medium ${actionColors[log.action]}`}
-            >
+            <span className="text-xs font-medium text-subtle">
               {actionLabels[log.action]}
             </span>
           </div>
 
           {/* Summary */}
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-              Summary
-            </p>
-            <p className="mt-1 text-sm text-stone-700 dark:text-zinc-300">
-              {log.summary}
-            </p>
-          </div>
+          <DetailSection label="Summary">
+            <p className="text-sm text-subtle">{log.summary}</p>
+          </DetailSection>
 
           {/* Detail */}
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-              Detail
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-zinc-400">
-              {log.detail}
-            </p>
-          </div>
+          <DetailSection label="Detail">
+            <p className="text-xs leading-relaxed text-dim">{log.detail}</p>
+          </DetailSection>
 
           {/* Metadata */}
-          {(log.model || log.tokens || log.latency || log.channel) && (
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                Metadata
-              </p>
-              <div className="mt-2 space-y-1.5">
-                {log.model && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <Cpu className="h-3 w-3 text-stone-400 dark:text-zinc-500" />
-                    <span className="text-stone-500 dark:text-zinc-400">
-                      Model:
-                    </span>
-                    <code className="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] dark:bg-zinc-700">
-                      {log.model}
-                    </code>
-                  </div>
-                )}
-                {log.tokens !== undefined && log.tokens > 0 && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <Hash className="h-3 w-3 text-stone-400 dark:text-zinc-500" />
-                    <span className="text-stone-500 dark:text-zinc-400">
-                      Tokens:
-                    </span>
-                    <span className="font-mono font-medium text-stone-700 dark:text-zinc-300">
-                      {log.tokens.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-                {log.latency !== undefined && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <Clock className="h-3 w-3 text-stone-400 dark:text-zinc-500" />
-                    <span className="text-stone-500 dark:text-zinc-400">
-                      Latency:
-                    </span>
-                    <span className="font-mono font-medium text-stone-700 dark:text-zinc-300">
-                      {log.latency}ms
-                    </span>
-                  </div>
-                )}
-                {log.channel && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <Zap className="h-3 w-3 text-stone-400 dark:text-zinc-500" />
-                    <span className="text-stone-500 dark:text-zinc-400">
-                      Channel:
-                    </span>
-                    <span className="font-medium text-stone-700 dark:text-zinc-300">
-                      {log.channel}
-                    </span>
-                  </div>
-                )}
+          {metaItems.length > 0 && (
+            <DetailSection label="Metadata">
+              <div className="space-y-1.5">
+                {metaItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="flex items-center gap-2 text-xs">
+                      <Icon className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-dim">{item.label}:</span>
+                      {item.value}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            </DetailSection>
           )}
         </div>
       </ScrollArea>
+    </div>
+  );
+}
+
+function DetailSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-1">{children}</div>
     </div>
   );
 }
@@ -385,27 +325,21 @@ function StatsBar({ logs }: { logs: LogEntry[] }) {
   const totalTokens = logs.reduce((sum, l) => sum + (l.tokens ?? 0), 0);
 
   return (
-    <div className="flex items-center gap-6 border-b border-dashed border-stone-200 px-4 py-2 dark:border-zinc-700">
+    <div className="flex items-center gap-6 border-b border-dashed px-4 py-2">
       <div className="flex items-center gap-1.5">
         <span className="h-2 w-2 rounded-full bg-emerald-500" />
-        <span className="text-[10px] font-medium uppercase tracking-wider text-stone-400 dark:text-zinc-500">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
           Live
         </span>
       </div>
       <div className="flex items-center gap-4 text-[11px]">
-        <span className="text-stone-500 dark:text-zinc-400">
-          <span className="font-bold text-stone-700 dark:text-zinc-200">
-            {logs.length}
-          </span>{" "}
-          entries
+        <span className="text-dim">
+          <span className="font-bold text-stone-700 dark:text-zinc-200">{logs.length}</span> entries
         </span>
-        <span className="text-stone-500 dark:text-zinc-400">
-          <span className="font-bold text-violet-600 dark:text-violet-400">
-            {apiCalls}
-          </span>{" "}
-          API calls
+        <span className="text-dim">
+          <span className="font-bold text-violet-600 dark:text-violet-400">{apiCalls}</span> API calls
         </span>
-        <span className="text-stone-500 dark:text-zinc-400">
+        <span className="text-dim">
           <span className="font-bold text-stone-700 dark:text-zinc-200">
             {totalTokens >= 1_000_000
               ? `${(totalTokens / 1_000_000).toFixed(1)}M`
@@ -461,34 +395,18 @@ export default function LogsPage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Page Header */}
-      <div className="flex items-center gap-3 border-b border-dashed border-stone-200 px-6 py-3 dark:border-zinc-700">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-100 dark:bg-zinc-800">
-          <Terminal className="h-4 w-4 text-stone-500 dark:text-zinc-400" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-stone-800 dark:text-zinc-100">
-            Logs
-          </h1>
-          <p className="text-xs text-stone-500 dark:text-zinc-400">
-            Real-time activity stream across all Clawd agents
-          </p>
-        </div>
+      <div className="border-b border-dashed px-6 py-3">
+        <PageHeader
+          icon={Terminal}
+          title="Logs"
+          description="Real-time activity stream across all Clawd agents"
+        />
       </div>
 
-      {/* Stats */}
       <StatsBar logs={filteredLogs} />
+      <FilterBar filters={filters} onChange={setFilters} resultCount={filteredLogs.length} />
 
-      {/* Filters */}
-      <FilterBar
-        filters={filters}
-        onChange={setFilters}
-        resultCount={filteredLogs.length}
-      />
-
-      {/* Content: Log list + Detail panel */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Log List */}
         <ScrollArea className="flex-1">
           <div>
             {filteredLogs.length > 0 ? (
@@ -498,28 +416,22 @@ export default function LogsPage() {
                   log={log}
                   isSelected={selectedLog?.id === log.id}
                   onClick={() =>
-                    setSelectedLog(
-                      selectedLog?.id === log.id ? null : log
-                    )
+                    setSelectedLog(selectedLog?.id === log.id ? null : log)
                   }
                 />
               ))
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-stone-400 dark:text-zinc-500">
-                <Terminal className="h-8 w-8 mb-2" />
-                <p className="text-sm font-medium">No logs match your filters</p>
-                <p className="text-xs mt-1">Try adjusting or clearing filters</p>
-              </div>
+              <EmptyState
+                icon={Terminal}
+                message="No logs match your filters"
+                hint="Try adjusting or clearing filters"
+              />
             )}
           </div>
         </ScrollArea>
 
-        {/* Detail Panel */}
         {selectedLog && (
-          <DetailPanel
-            log={selectedLog}
-            onClose={() => setSelectedLog(null)}
-          />
+          <DetailPanel log={selectedLog} onClose={() => setSelectedLog(null)} />
         )}
       </div>
     </div>

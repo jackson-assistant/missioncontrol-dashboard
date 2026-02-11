@@ -36,7 +36,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex h-screen flex-col bg-stone-50 font-sans dark:bg-zinc-900">
+          <div className="flex h-screen flex-col bg-background font-sans">
             <TopBar />
             <div className="flex-1 overflow-hidden">{children}</div>
           </div>

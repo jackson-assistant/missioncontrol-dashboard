@@ -15,7 +15,6 @@ export interface ApiCallLog {
 export interface AgentUsage {
   agentId: string;
   agentName: string;
-  color: string;
   totalCalls: number;
   totalTokens: number;
   totalCost: number;
@@ -28,62 +27,13 @@ export const todayStats = {
 };
 
 export const agentUsage: AgentUsage[] = [
-  {
-    agentId: "devbot",
-    agentName: "DevBot",
-    color: "#6C63FF",
-    totalCalls: 234,
-    totalTokens: 456_200,
-    totalCost: 1.37,
-  },
-  {
-    agentId: "writebot",
-    agentName: "WriteBot",
-    color: "#FF8C42",
-    totalCalls: 189,
-    totalTokens: 312_400,
-    totalCost: 0.94,
-  },
-  {
-    agentId: "researchbot",
-    agentName: "ResearchBot",
-    color: "#FF6B6B",
-    totalCalls: 156,
-    totalTokens: 234_100,
-    totalCost: 0.70,
-  },
-  {
-    agentId: "socialbot",
-    agentName: "SocialBot",
-    color: "#DDA0DD",
-    totalCalls: 98,
-    totalTokens: 89_300,
-    totalCost: 0.27,
-  },
-  {
-    agentId: "squadbot",
-    agentName: "SquadBot",
-    color: "#4ECDC4",
-    totalCalls: 87,
-    totalTokens: 78_200,
-    totalCost: 0.23,
-  },
-  {
-    agentId: "mailbot",
-    agentName: "MailBot",
-    color: "#A8E6CF",
-    totalCalls: 52,
-    totalTokens: 45_600,
-    totalCost: 0.14,
-  },
-  {
-    agentId: "clawdlead",
-    agentName: "ClawdLead",
-    color: "#F5C542",
-    totalCalls: 31,
-    totalTokens: 27_760,
-    totalCost: 0.07,
-  },
+  { agentId: "devbot", agentName: "DevBot", totalCalls: 234, totalTokens: 456_200, totalCost: 1.37 },
+  { agentId: "writebot", agentName: "WriteBot", totalCalls: 189, totalTokens: 312_400, totalCost: 0.94 },
+  { agentId: "researchbot", agentName: "ResearchBot", totalCalls: 156, totalTokens: 234_100, totalCost: 0.70 },
+  { agentId: "socialbot", agentName: "SocialBot", totalCalls: 98, totalTokens: 89_300, totalCost: 0.27 },
+  { agentId: "squadbot", agentName: "SquadBot", totalCalls: 87, totalTokens: 78_200, totalCost: 0.23 },
+  { agentId: "mailbot", agentName: "MailBot", totalCalls: 52, totalTokens: 45_600, totalCost: 0.14 },
+  { agentId: "clawdlead", agentName: "ClawdLead", totalCalls: 31, totalTokens: 27_760, totalCost: 0.07 },
 ];
 
 export const recentCalls: ApiCallLog[] = [

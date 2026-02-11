@@ -2,8 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { todayStats, agentUsage, recentCalls } from "@/lib/api-data";
+import { getAgentColor } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Panel } from "@/components/dashboard/ui/panel";
+import { StatCard } from "@/components/dashboard/ui/stat-card";
+import { PageHeader } from "@/components/dashboard/ui/page-header";
+import { CodeBadge } from "@/components/dashboard/ui/code-badge";
 import {
   Wallet,
   Zap,
@@ -60,31 +66,32 @@ function BalanceCard() {
   const isLow = balance ? balance.available_balance < 10 : false;
 
   return (
-    <div className="col-span-2 rounded-xl border border-dashed border-stone-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-800">
+    <Panel padding="lg" className="col-span-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-stone-100 text-emerald-500 dark:bg-zinc-700">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-emerald-500">
             <Wallet className="h-4.5 w-4.5" />
           </div>
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wider text-stone-400 dark:text-zinc-500">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Moonshot Balance
             </p>
-            <p className="text-xs text-stone-500 dark:text-zinc-400">
+            <p className="text-xs text-dim">
               Kimi K2.5
             </p>
           </div>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="xs"
           onClick={fetchBalance}
           disabled={loading}
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-stone-500 transition-colors hover:bg-stone-100 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-700"
         >
           <RefreshCw
             className={`h-3 w-3 ${loading ? "animate-spin" : ""}`}
           />
           Refresh
-        </button>
+        </Button>
       </div>
 
       {error ? (
@@ -98,18 +105,18 @@ function BalanceCard() {
         </div>
       ) : loading && !balance ? (
         <div className="mt-4 space-y-2">
-          <div className="h-8 w-32 animate-pulse rounded bg-stone-100 dark:bg-zinc-700" />
-          <div className="h-2 w-full animate-pulse rounded-full bg-stone-100 dark:bg-zinc-700" />
+          <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+          <div className="h-2 w-full animate-pulse rounded-full bg-muted" />
         </div>
       ) : balance ? (
         <>
           <div className="mt-4 flex items-baseline gap-1">
             <span
-              className={`text-3xl font-bold ${isLow ? "text-rose-500" : "text-stone-800 dark:text-zinc-100"}`}
+              className={`text-3xl font-bold ${isLow ? "text-rose-500" : "text-foreground"}`}
             >
               ${balance.available_balance.toFixed(2)}
             </span>
-            <span className="text-sm text-stone-400 dark:text-zinc-500">
+            <span className="text-sm text-muted-foreground">
               USD
             </span>
             {isLow && (
@@ -120,7 +127,7 @@ function BalanceCard() {
           </div>
 
           {/* Progress bar */}
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-stone-100 dark:bg-zinc-700">
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
             <div
               className={`h-full rounded-full transition-all ${
                 isLow ? "bg-rose-500" : "bg-emerald-500"
@@ -131,95 +138,70 @@ function BalanceCard() {
 
           <div className="mt-3 flex justify-between text-[11px]">
             <div>
-              <span className="text-stone-400 dark:text-zinc-500">
+              <span className="text-muted-foreground">
                 Voucher:{" "}
               </span>
-              <span className="font-medium text-stone-600 dark:text-zinc-300">
+              <span className="font-medium text-subtle">
                 ${balance.voucher_balance.toFixed(2)}
               </span>
             </div>
             <div>
-              <span className="text-stone-400 dark:text-zinc-500">Cash: </span>
-              <span className="font-medium text-stone-600 dark:text-zinc-300">
+              <span className="text-muted-foreground">Cash: </span>
+              <span className="font-medium text-subtle">
                 ${balance.cash_balance.toFixed(2)}
               </span>
             </div>
           </div>
         </>
       ) : null}
-    </div>
+    </Panel>
   );
 }
 
+// ── Table Header Cell ──────────────────────────────────────────────────────
+
+function Th({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <th className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground ${className ?? ""}`}>
+      {children}
+    </th>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────
+
 export default function ApiUsagePage() {
   const statCards = [
-    {
-      label: "Calls Today",
-      value: todayStats.totalCalls.toLocaleString(),
-      icon: Zap,
-      color: "text-blue-500",
-    },
+    { label: "Calls Today", value: todayStats.totalCalls.toLocaleString(), icon: Zap, color: "text-blue-500" },
     {
       label: "Tokens Used",
-      value:
-        todayStats.tokensUsed >= 1_000_000
-          ? `${(todayStats.tokensUsed / 1_000_000).toFixed(1)}M`
-          : `${(todayStats.tokensUsed / 1_000).toFixed(0)}K`,
+      value: todayStats.tokensUsed >= 1_000_000
+        ? `${(todayStats.tokensUsed / 1_000_000).toFixed(1)}M`
+        : `${(todayStats.tokensUsed / 1_000).toFixed(0)}K`,
       icon: Hash,
       color: "text-amber-500",
     },
-    {
-      label: "Est. Daily Cost",
-      value: `$${todayStats.estimatedCost.toFixed(2)}`,
-      icon: DollarSign,
-      color: "text-violet-500",
-    },
+    { label: "Est. Daily Cost", value: `$${todayStats.estimatedCost.toFixed(2)}`, icon: DollarSign, color: "text-violet-500" },
   ];
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-auto p-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-lg font-bold text-stone-800 dark:text-zinc-100">
-          API Usage
-        </h1>
-        <p className="text-sm text-stone-500 dark:text-zinc-400">
-          Monitor balance and API consumption across Clawd agents
-        </p>
-      </div>
+      <PageHeader title="API Usage" description="Monitor balance and API consumption across Clawd agents" />
 
       {/* Top Row: Balance Card + Stats */}
       <div className="grid grid-cols-5 gap-4">
         <BalanceCard />
-        {statCards.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={stat.label}
-              className="rounded-xl border border-dashed border-stone-300 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800"
-            >
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-lg bg-stone-100 dark:bg-zinc-700 ${stat.color}`}
-              >
-                <Icon className="h-4.5 w-4.5" />
-              </div>
-              <p className="mt-3 text-2xl font-bold text-stone-800 dark:text-zinc-100">
-                {stat.value}
-              </p>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                {stat.label}
-              </p>
-            </div>
-          );
-        })}
+        {statCards.map((s) => (
+          <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value} color={s.color} />
+        ))}
       </div>
 
       {/* Usage by Agent */}
-      <div className="rounded-xl border border-dashed border-stone-300 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="text-sm font-bold text-stone-800 dark:text-zinc-100">
+      <Panel>
+        <h2 className="text-sm font-bold text-foreground">
           Usage by Agent
         </h2>
-        <p className="text-xs text-stone-400 dark:text-zinc-500">
+        <p className="text-xs text-muted-foreground">
           Today&apos;s API consumption per agent
         </p>
         <div className="mt-4 grid grid-cols-7 gap-3">
@@ -227,62 +209,46 @@ export default function ApiUsagePage() {
             <div key={agent.agentId} className="text-center">
               <div
                 className="mx-auto flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ backgroundColor: agent.color }}
+                style={{ backgroundColor: getAgentColor(agent.agentId) }}
               >
                 {agent.agentName.slice(0, 2).toUpperCase()}
               </div>
-              <p className="mt-1.5 text-xs font-medium text-stone-700 dark:text-zinc-300">
+              <p className="mt-1.5 text-xs font-medium text-subtle">
                 {agent.agentName}
               </p>
-              <p className="font-mono text-[11px] font-bold text-stone-800 dark:text-zinc-100">
+              <p className="font-mono text-[11px] font-bold text-foreground">
                 {agent.totalCalls}
               </p>
-              <p className="text-[10px] text-stone-400 dark:text-zinc-500">
+              <p className="text-[10px] text-muted-foreground">
                 ${agent.totalCost.toFixed(2)}
               </p>
             </div>
           ))}
         </div>
-      </div>
+      </Panel>
 
       {/* Recent Call Log */}
-      <div className="flex-1 overflow-hidden rounded-xl border border-dashed border-stone-300 bg-white dark:border-zinc-700 dark:bg-zinc-800">
-        <div className="border-b border-dashed border-stone-200 px-4 py-3 dark:border-zinc-700">
-          <h2 className="text-sm font-bold text-stone-800 dark:text-zinc-100">
+      <Panel padding="none" className="flex-1 overflow-hidden">
+        <div className="border-b border-dashed px-4 py-3">
+          <h2 className="text-sm font-bold text-foreground">
             Recent API Calls
           </h2>
-          <p className="text-xs text-stone-400 dark:text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             Last {recentCalls.length} calls across all agents
           </p>
         </div>
         <ScrollArea className="h-[calc(100%-60px)]">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-dashed border-stone-200 text-left dark:border-zinc-700">
-                <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                  Time
-                </th>
-                <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                  Agent
-                </th>
-                <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                  Model
-                </th>
-                <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                  Tokens In
-                </th>
-                <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                  Tokens Out
-                </th>
-                <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                  Cost
-                </th>
-                <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                  Latency
-                </th>
-                <th className="px-4 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-                  Status
-                </th>
+              <tr className="border-b border-dashed text-left">
+                <Th>Time</Th>
+                <Th>Agent</Th>
+                <Th>Model</Th>
+                <Th className="text-right">Tokens In</Th>
+                <Th className="text-right">Tokens Out</Th>
+                <Th className="text-right">Cost</Th>
+                <Th className="text-right">Latency</Th>
+                <Th className="text-center">Status</Th>
               </tr>
             </thead>
             <tbody>
@@ -291,27 +257,25 @@ export default function ApiUsagePage() {
                   key={call.id}
                   className="border-b border-dashed border-stone-100 transition-colors hover:bg-stone-50 dark:border-zinc-700/50 dark:hover:bg-zinc-700/30"
                 >
-                  <td className="px-4 py-3 text-xs text-stone-400 dark:text-zinc-500">
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
                     {call.timestamp}
                   </td>
-                  <td className="px-4 py-3 text-xs font-medium text-stone-700 dark:text-zinc-300">
+                  <td className="px-4 py-3 text-xs font-medium text-subtle">
                     {call.agentName}
                   </td>
                   <td className="px-4 py-3">
-                    <code className="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] text-stone-600 dark:bg-zinc-700 dark:text-zinc-400">
-                      {call.model}
-                    </code>
+                    <CodeBadge>{call.model}</CodeBadge>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-xs text-stone-600 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-right font-mono text-xs text-dim">
                     {call.tokensIn.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-xs text-stone-600 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-right font-mono text-xs text-dim">
                     {call.tokensOut.toLocaleString()}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-xs font-medium text-stone-800 dark:text-zinc-200">
                     ${call.cost.toFixed(3)}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-xs text-stone-500 dark:text-zinc-400">
+                  <td className="px-4 py-3 text-right font-mono text-xs text-dim">
                     {call.latency}ms
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -326,7 +290,7 @@ export default function ApiUsagePage() {
             </tbody>
           </table>
         </ScrollArea>
-      </div>
+      </Panel>
     </div>
   );
 }

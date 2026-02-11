@@ -5,6 +5,7 @@ import type { TaskStatus } from "@/lib/data";
 import { TaskCard } from "./TaskCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { SectionHeader } from "./ui/section-header";
 
 const columnDotColors: Record<TaskStatus, string> = {
   inbox: "bg-amber-400",
@@ -17,13 +18,7 @@ const columnDotColors: Record<TaskStatus, string> = {
 export function MissionQueue() {
   return (
     <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
-      {/* Section Header */}
-      <div className="flex items-center gap-2 border-b border-dashed border-stone-300 px-4 py-3 dark:border-zinc-700">
-        <span className="text-xs text-amber-500">✦</span>
-        <h2 className="text-xs font-bold uppercase tracking-widest text-stone-800 dark:text-zinc-100">
-          Mission Queue
-        </h2>
-      </div>
+      <SectionHeader title="Mission Queue" />
 
       {/* Kanban Columns */}
       <div className="flex flex-1 overflow-hidden">
@@ -32,19 +27,19 @@ export function MissionQueue() {
           return (
             <div
               key={col.key}
-              className="flex min-w-0 flex-1 flex-col border-r border-dashed border-stone-200 last:border-r-0 dark:border-zinc-700"
+              className="flex min-w-0 flex-1 flex-col border-r border-dashed last:border-r-0"
             >
               {/* Column Header */}
-              <div className="flex items-center gap-2 border-b border-dashed border-stone-200 px-3 py-2.5 dark:border-zinc-700">
+              <div className="flex items-center gap-2 border-b border-dashed px-3 py-2.5">
                 <span
                   className={`h-2 w-2 rounded-full ${columnDotColors[col.key]}`}
                 />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-600 dark:text-zinc-300">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-subtle">
                   {col.label}
                 </span>
                 <Badge
                   variant="secondary"
-                  className="ml-auto flex h-5 min-w-[20px] items-center justify-center bg-stone-200/70 p-0 text-[10px] text-stone-500 dark:bg-zinc-700/70 dark:text-zinc-400"
+                  className="ml-auto flex h-5 min-w-[20px] items-center justify-center bg-secondary/70 p-0 text-[10px] text-dim"
                 >
                   {columnTasks.length}
                 </Badge>

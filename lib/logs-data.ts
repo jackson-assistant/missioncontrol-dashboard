@@ -58,21 +58,6 @@ export const levelColors: Record<LogLevel, string> = {
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
 };
 
-export const actionColors: Record<LogAction, string> = {
-  api_call: "text-violet-500",
-  task_start: "text-blue-500",
-  task_complete: "text-emerald-500",
-  task_fail: "text-rose-500",
-  tool_use: "text-amber-500",
-  message_send: "text-cyan-500",
-  message_receive: "text-teal-500",
-  memory_write: "text-indigo-500",
-  memory_read: "text-indigo-400",
-  heartbeat: "text-stone-400 dark:text-zinc-500",
-  gateway: "text-orange-500",
-  channel: "text-pink-500",
-};
-
 // ── Mock Log Entries ───────────────────────────────────────────────────────
 
 function time(minutesAgo: number): string {
