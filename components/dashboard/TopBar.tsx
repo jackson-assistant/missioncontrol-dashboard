@@ -5,12 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { agents, tasks } from "@/lib/data";
-import { FileText, LayoutDashboard, Activity } from "lucide-react";
+import { FileText, LayoutDashboard, Activity, Terminal } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 const navLinks = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/api-usage", label: "API Usage", icon: Activity },
+  { href: "/logs", label: "Logs", icon: Terminal },
 ];
 
 export function TopBar() {

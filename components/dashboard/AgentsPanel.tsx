@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { agents } from "@/lib/data";
 import type { Agent } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,9 +20,16 @@ const statusColors: Record<string, string> = {
   OFFLINE: "bg-stone-400 dark:bg-zinc-600",
 };
 
-function AgentRow({ agent }: { agent: Agent }) {
+function AgentRow({ agent, isActive }: { agent: Agent; isActive: boolean }) {
   return (
-    <div className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-stone-100/50 dark:hover:bg-zinc-800/50">
+    <Link
+      href={`/agents/${agent.id}`}
+      className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-stone-100/50 dark:hover:bg-zinc-800/50 ${
+        isActive
+          ? "border-l-2 border-l-amber-500 bg-stone-100/70 dark:bg-zinc-800/70"
+          : "border-l-2 border-l-transparent"
+      }`}
+    >
       <Avatar size="lg">
         <AvatarFallback
           style={{ backgroundColor: agent.color, color: "white" }}
@@ -53,11 +62,13 @@ function AgentRow({ agent }: { agent: Agent }) {
           {agent.title}
         </p>
       </div>
-    </div>
+    </Link>
   );
 }
 
 export function AgentsPanel() {
+  const pathname = usePathname();
+
   return (
     <aside className="flex w-[220px] shrink-0 flex-col border-r border-dashed border-stone-300 bg-stone-50/50 dark:border-zinc-700 dark:bg-zinc-800/60">
       <div className="flex items-center gap-2 border-b border-dashed border-stone-300 px-4 py-3 dark:border-zinc-700">
@@ -75,7 +86,11 @@ export function AgentsPanel() {
       <ScrollArea className="flex-1">
         <div className="divide-y divide-dashed divide-stone-200 dark:divide-zinc-800">
           {agents.map((agent) => (
-            <AgentRow key={agent.id} agent={agent} />
+            <AgentRow
+              key={agent.id}
+              agent={agent}
+              isActive={pathname === `/agents/${agent.id}`}
+            />
           ))}
         </div>
       </ScrollArea>
