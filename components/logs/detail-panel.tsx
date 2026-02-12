@@ -37,7 +37,7 @@ export function DetailPanel({ log, onClose }: { log: LogEntry; onClose: () => vo
   ].filter(Boolean) as { icon: typeof Cpu; label: string; value: React.ReactNode }[];
 
   return (
-    <div className="flex w-[380px] shrink-0 flex-col border-l border-dashed bg-stone-50/50 dark:bg-zinc-800/60">
+    <div className="absolute inset-x-0 bottom-0 top-0 z-10 flex flex-col border-l border-dashed bg-stone-50 dark:bg-zinc-900 md:relative md:w-[380px] md:shrink-0 md:bg-stone-50/50 md:dark:bg-zinc-800/60">
       <div className="flex items-center justify-between border-b border-dashed px-4 py-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
           Log Detail

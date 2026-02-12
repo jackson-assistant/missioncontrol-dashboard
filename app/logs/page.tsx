@@ -78,7 +78,7 @@ export default function LogsPage() {
         </span>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
         <ScrollArea className="flex-1">
           <div>
             {isLoading && filteredLogs.length === 0 ? (

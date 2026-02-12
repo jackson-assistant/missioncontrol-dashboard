@@ -66,7 +66,7 @@ export default function SettingsPage() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* Sidebar */}
-      <div className="flex w-[200px] shrink-0 flex-col border-r border-dashed bg-stone-50/50 dark:bg-zinc-800/60">
+      <div className="hidden w-[200px] shrink-0 flex-col border-r border-dashed bg-stone-50/50 dark:bg-zinc-800/60 md:flex">
         <div className="p-4">
           <PageHeader icon={Settings} title="Settings" />
         </div>

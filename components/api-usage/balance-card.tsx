@@ -52,7 +52,7 @@ export function BalanceCard() {
   const isLow = balance ? balance.available_balance < 10 : false;
 
   return (
-    <Panel padding="lg" className="col-span-2">
+    <Panel padding="lg" className="sm:col-span-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-emerald-500">

@@ -49,7 +49,7 @@ export function AgentsPanel() {
   const agents = rawAgents.map(mapApiAgent);
 
   return (
-    <aside className="flex w-[220px] shrink-0 flex-col border-r border-dashed bg-stone-50/50 dark:bg-zinc-800/60">
+    <aside className="hidden w-[220px] shrink-0 flex-col border-r border-dashed bg-stone-50/50 dark:bg-zinc-800/60 md:flex">
       <SectionHeader title="Agents" badge={agents.length} />
       <ScrollArea className="flex-1">
         <div className="divide-y divide-dashed divide-stone-200 dark:divide-zinc-800">

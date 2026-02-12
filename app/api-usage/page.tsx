@@ -23,11 +23,11 @@ export default function ApiUsagePage() {
   ];
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-auto p-6">
+    <div className="flex h-full flex-col gap-4 overflow-auto p-4 md:p-6">
       <PageHeader title="API Usage" description="Monitor balance and API consumption across Clawd agents" />
 
       {/* Top Row: Balance Card + Stats */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <BalanceCard />
         {statCards.map((s) => (
           <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value} color={s.color} />

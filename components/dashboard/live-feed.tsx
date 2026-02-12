@@ -94,7 +94,7 @@ export function LiveFeed() {
   const activityCount = feedItems.filter((f: FeedItem) => f.category === "activity").length;
 
   return (
-    <aside className="flex w-[320px] shrink-0 flex-col border-l border-dashed bg-stone-50/50 dark:bg-zinc-800/60">
+    <aside className="hidden w-[320px] shrink-0 flex-col border-l border-dashed bg-stone-50/50 dark:bg-zinc-800/60 lg:flex">
       <SectionHeader title="Live Feed" />
 
       {/* Filter toggle */}
