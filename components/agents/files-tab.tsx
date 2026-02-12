@@ -33,7 +33,7 @@ export function FilesTab({ agentId }: { agentId: string }) {
   return (
     <Panel padding="none" className="flex h-[calc(100vh-280px)] min-h-[400px] flex-col overflow-hidden md:flex-row">
       {/* File List Sidebar - collapsible on mobile */}
-      <div className="shrink-0 border-b border-dashed md:w-[220px] md:border-b-0 md:border-r">
+      <div className="flex shrink-0 flex-col border-b border-dashed md:w-[220px] md:border-b-0 md:border-r">
         {/* Header - clickable on mobile to toggle list */}
         <button
           className="flex w-full items-center justify-between border-b border-dashed px-3 py-2.5 md:pointer-events-none"
@@ -51,8 +51,8 @@ export function FilesTab({ agentId }: { agentId: string }) {
         </button>
 
         {/* File list - always visible on desktop, toggle on mobile */}
-        <div className={`${mobileListOpen ? "block" : "hidden"} max-h-[200px] overflow-auto md:block md:max-h-none`}>
-          <ScrollArea className="md:h-[calc(100%-52px)]">
+        <div className={`${mobileListOpen ? "block" : "hidden"} max-h-[200px] overflow-hidden md:block md:flex-1 md:max-h-none`}>
+          <ScrollArea className="h-full">
             <div className="p-1.5">
               {files.map((file: WorkspaceFile) => {
                 const isSelected = selectedFile?.name === file.name;
