@@ -25,8 +25,10 @@ export function NextUpSection() {
                 <span className="text-sm font-medium text-subtle">
                   {job.name || job.command || "Cron Job"}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  {job.schedule || job.nextRun || "—"}
+                <span className="text-xs font-mono text-muted-foreground">
+                  {typeof job.schedule === "string"
+                    ? job.schedule
+                    : job.schedule?.expr || job.schedule?.at || (job.schedule?.everyMs ? `every ${Math.round(job.schedule.everyMs / 60000)}m` : null) || job.nextRun || "—"}
                 </span>
               </div>
             ))}
