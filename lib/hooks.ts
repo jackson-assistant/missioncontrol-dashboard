@@ -54,6 +54,13 @@ export function useCron() {
   return { cron: data, error: data?.error || error, isLoading };
 }
 
+export function useConfig() {
+  const { data, error, isLoading } = useSWR("/api/config", fetcher, {
+    refreshInterval: 60000,
+  });
+  return { config: data, error: data?.error || error, isLoading };
+}
+
 export function useLogs() {
   const { data, error, isLoading, mutate } = useSWR("/api/logs", fetcher, {
     refreshInterval: 10000,

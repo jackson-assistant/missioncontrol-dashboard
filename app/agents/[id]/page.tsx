@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatusDot } from "@/components/shared/status-dot";
-import { RoleBadge } from "@/components/shared/role-badge";
 import { CodeBadge } from "@/components/shared/code-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { OverviewTab } from "@/components/agents/overview-tab";
@@ -82,7 +81,6 @@ export default function AgentProfilePage() {
                   <h1 className="text-xl font-bold text-foreground">
                     {agent.name}
                   </h1>
-                  <RoleBadge role={agent.role} className="px-2 py-0.5" />
                   <StatusDot status={agent.status} label />
                 </div>
                 <p className="mt-0.5 text-sm text-dim">{apiAgent.emoji}</p>

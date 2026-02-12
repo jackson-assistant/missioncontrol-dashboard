@@ -58,19 +58,61 @@ export const levelColors: Record<string, string> = {
   info: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
 };
 
+/** Infer a meaningful action from the raw log message */
+function inferAction(msg: string, subsystem: string): LogAction {
+  const m = msg.toLowerCase();
+  if (m.includes("heartbeat")) return "heartbeat";
+  if (m.includes("message") && (m.includes("received") || m.includes("incoming"))) return "message_receive";
+  if (m.includes("message") && (m.includes("sent") || m.includes("deliver"))) return "message_send";
+  if (m.includes("tool") || m.includes("exec")) return "tool_use";
+  if (m.includes("memory") && m.includes("write")) return "memory_write";
+  if (m.includes("memory") && m.includes("read")) return "memory_read";
+  if (m.includes("task") && m.includes("start")) return "task_start";
+  if (m.includes("task") && (m.includes("complete") || m.includes("done"))) return "task_complete";
+  if (m.includes("task") && m.includes("fail")) return "task_fail";
+  if (m.includes("api") || m.includes("model") || m.includes("token")) return "api_call";
+  if (m.includes("channel") || m.includes("telegram") || m.includes("webhook")) return "channel";
+  if (m.includes("gateway") || subsystem === "gateway") return "gateway";
+  return "system";
+}
+
 /** Map raw gateway log to our LogEntry */
 export function mapGatewayLog(raw: any, index: number): LogEntry {
-  const level = raw.level === "error" ? "error" : raw.level === "warn" ? "warn" : raw.level === "debug" ? "debug" : "info";
-  const time = raw.time ? new Date(raw.time).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-  
+  const level =
+    raw.level === "error"
+      ? "error"
+      : raw.level === "warn"
+        ? "warn"
+        : raw.level === "debug"
+          ? "debug"
+          : "info";
+
+  const time = raw.time
+    ? new Date(raw.time).toLocaleTimeString("en-US", {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "";
+
+  const subsystem = raw.subsystem || "system";
+  const message = raw.message || "";
+  const action = inferAction(message, subsystem);
+
+  // Create a cleaner summary — strip noise prefixes
+  let summary = message.slice(0, 200);
+  // Remove JSON subsystem prefix like {"subsystem":"plugins"}
+  summary = summary.replace(/^\{[^}]*\}\s*/, "");
+
   return {
     id: `log-${index}`,
     timestamp: time,
-    agentId: raw.subsystem || "system",
-    agentName: raw.subsystem || "System",
+    agentId: subsystem,
+    agentName: subsystem === "system" ? "System" : subsystem,
     level: level as LogLevel,
-    action: "system",
-    summary: (raw.message || "").slice(0, 200),
-    detail: raw.message || "",
+    action,
+    summary,
+    detail: message,
   };
 }

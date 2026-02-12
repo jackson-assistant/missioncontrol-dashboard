@@ -8,7 +8,6 @@ import type { Agent } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionHeader } from "@/components/shared/section-header";
-import { RoleBadge } from "@/components/shared/role-badge";
 import { StatusDot } from "@/components/shared/status-dot";
 
 function AgentRow({ agent, isActive }: { agent: Agent; isActive: boolean }) {
@@ -34,7 +33,6 @@ function AgentRow({ agent, isActive }: { agent: Agent; isActive: boolean }) {
           <span className="truncate text-sm font-semibold text-foreground">
             {agent.name}
           </span>
-          <RoleBadge role={agent.role} />
         </div>
         <StatusDot status={agent.status} size="xs" label className="mt-0.5" />
         <p className="mt-0.5 truncate text-xs text-dim">
