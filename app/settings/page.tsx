@@ -8,16 +8,13 @@ import {
   Bell,
   Save,
   Check,
-  RefreshCw,
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionPanel } from "@/components/settings/section-panel";
 import { SettingRow } from "@/components/settings/setting-row";
-import { Toggle } from "@/components/settings/toggle";
-import { useConfig, useAgents, useChannels } from "@/lib/hooks";
-import { mapApiAgent } from "@/lib/data";
+import { useConfig } from "@/lib/hooks";
 import {
   timezones,
   dateFormats,
@@ -39,9 +36,6 @@ const sidebarSections = [
 
 export default function SettingsPage() {
   const { config, isLoading: configLoading } = useConfig();
-  const { agents: rawAgents, isLoading: agentsLoading } = useAgents();
-  const { channels } = useChannels();
-  const agents = rawAgents.map(mapApiAgent);
 
   const [localSettings, setLocalSettings] = useState({
     timezone: "Australia/Sydney",
@@ -63,16 +57,11 @@ export default function SettingsPage() {
   };
 
   // Extract live data
-  const modelConfig = config?.models;
-  const primaryModel = modelConfig?.defaults?.model?.primary || "—";
-  const imageModel = modelConfig?.defaults?.imageModel?.primary || "—";
-  const modelAliases = modelConfig?.defaults?.models || {};
+  const defaults = config?.defaults || {};
+  const primaryModel = defaults?.model?.primary || "—";
+  const imageModel = defaults?.imageModel?.primary || "—";
+  const modelAliases = defaults?.models || {};
   const configAgents = config?.agents || [];
-
-  // Channel status from health/channels hook
-  const channelEntries = channels && !channels.error
-    ? Object.entries(channels).filter(([k]) => k !== "ok" && k !== "ts" && k !== "durationMs")
-    : [];
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -156,10 +145,10 @@ export default function SettingsPage() {
             {Object.keys(modelAliases).length > 0 && (
               <SettingRow label="Model Aliases" hint="Configured shorthand aliases">
                 <div className="space-y-1">
-                  {Object.entries(modelAliases).map(([model, config]: [string, any]) => (
+                  {Object.entries(modelAliases).map(([model, cfg]: [string, any]) => (
                     <div key={model} className="flex items-center justify-between rounded-md border bg-muted/50 px-3 py-1 text-xs">
                       <span className="font-mono text-foreground">{model}</span>
-                      <span className="text-muted-foreground">→ {config.alias || "—"}</span>
+                      <span className="text-muted-foreground">→ {cfg.alias || "—"}</span>
                     </div>
                   ))}
                 </div>
@@ -183,38 +172,18 @@ export default function SettingsPage() {
                 ))}
               </div>
             </SettingRow>
-
-            {channelEntries.length > 0 && (
-              <SettingRow label="Channels" hint="Connected messaging channels">
-                <div className="space-y-1">
-                  {channelEntries.map(([name, ch]: [string, any]) => (
-                    <div key={name} className="flex items-center justify-between rounded-md border bg-muted/50 px-3 py-1.5 text-xs">
-                      <span className="font-semibold capitalize text-foreground">{name}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        ch.configured
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                          : "bg-stone-100 text-stone-500 dark:bg-zinc-800 dark:text-zinc-500"
-                      }`}>
-                        {ch.configured ? "configured" : "not configured"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </SettingRow>
-            )}
           </SectionPanel>
 
           {/* API Keys */}
           <SectionPanel id="api-keys" title="API Keys" description="Manage provider credentials" icon={Key}>
-            <SettingRow label="Moonshot API Key" hint="Managed separately via environment. Keys are never displayed.">
-              <div className="flex gap-2">
+            <SettingRow label="Moonshot API Key" hint="Managed separately via environment variable">
+              <div className="flex gap-2 items-center">
                 <input
                   type="password"
-                  placeholder="Paste new API key..."
+                  placeholder="Set via MOONSHOT_API_KEY env"
                   className={`${inputClass} flex-1 font-mono text-xs`}
                   disabled
                 />
-                <span className="text-xs text-muted-foreground self-center">Set via MOONSHOT_API_KEY env</span>
               </div>
             </SettingRow>
           </SectionPanel>

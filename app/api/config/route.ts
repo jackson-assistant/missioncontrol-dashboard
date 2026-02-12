@@ -5,12 +5,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Get model config
-    const modelOutput = execSync("openclaw config get model 2>/dev/null", {
+    // Get agent defaults (model, imageModel, aliases)
+    const defaultsOutput = execSync("openclaw config get agents.defaults 2>/dev/null", {
       encoding: "utf-8",
       timeout: 10000,
     });
-    const modelConfig = JSON.parse(modelOutput);
+    const defaults = JSON.parse(defaultsOutput);
 
     // Get agents list
     const agentsOutput = execSync("openclaw agents list --json 2>/dev/null", {
@@ -19,25 +19,14 @@ export async function GET() {
     });
     const agents = JSON.parse(agentsOutput);
 
-    // Get channels
-    let channels: any = {};
-    try {
-      const channelsOutput = execSync("openclaw config get channels 2>/dev/null", {
-        encoding: "utf-8",
-        timeout: 10000,
-      });
-      channels = JSON.parse(channelsOutput);
-    } catch {}
-
     return NextResponse.json({
-      models: modelConfig,
+      defaults,
       agents: agents.map((a: any) => ({
         id: a.id,
         name: a.identityName || a.name || a.id,
         model: a.model,
         isDefault: a.isDefault,
       })),
-      channels,
     });
   } catch (err: any) {
     return NextResponse.json(

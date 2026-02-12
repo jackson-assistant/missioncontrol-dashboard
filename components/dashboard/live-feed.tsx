@@ -17,7 +17,8 @@ interface FeedItem {
 
 /** Classify a log entry as meaningful activity vs noise */
 function classifyLog(log: any): "activity" | "system" | "noise" {
-  const msg = (log.message || "").toLowerCase();
+  const msg = (log.message || "").trim();
+  const msgLower = msg.toLowerCase();
   const level = log.level;
 
   // Skip debug-level noise
@@ -29,19 +30,31 @@ function classifyLog(log: any): "activity" | "system" | "noise" {
   // Skip warning noise
   if (level === "warn") return "noise";
 
-  // Meaningful activity patterns
-  if (msg.includes("session") && (msg.includes("start") || msg.includes("end") || msg.includes("created"))) return "activity";
-  if (msg.includes("agent") && (msg.includes("turn") || msg.includes("run") || msg.includes("spawn"))) return "activity";
-  if (msg.includes("message") && (msg.includes("received") || msg.includes("sent") || msg.includes("deliver"))) return "activity";
-  if (msg.includes("heartbeat")) return "activity";
-  if (msg.includes("cron") || msg.includes("scheduled")) return "activity";
-  if (msg.includes("tool") && (msg.includes("call") || msg.includes("exec"))) return "activity";
-  if (msg.includes("channel") && (msg.includes("connect") || msg.includes("start") || msg.includes("stop"))) return "activity";
-  if (msg.includes("gateway") && (msg.includes("start") || msg.includes("ready") || msg.includes("restart"))) return "activity";
-  if (msg.includes("webhook")) return "activity";
-  if (msg.includes("model") && msg.includes("switch")) return "activity";
+  // Skip messages that are JSON objects/arrays (CLI stdout captured as logs)
+  if (msg.startsWith("{") || msg.startsWith("[") || msg.startsWith("{\n")) return "noise";
 
-  // Info level stuff that isn't caught above - show as system
+  // Skip very short or empty messages
+  if (msg.length < 5) return "noise";
+
+  // Skip CLI output patterns
+  if (msgLower.includes("openclaw") && (msgLower.includes("gateway stop") || msgLower.includes("systemctl"))) return "noise";
+  if (msgLower.includes("plugin cli register")) return "noise";
+  if (msgLower.includes("already running") || msgLower.includes("already registered")) return "noise";
+  if (msgLower.includes("port") && msgLower.includes("in use")) return "noise";
+
+  // Meaningful activity patterns
+  if (msgLower.includes("session") && (msgLower.includes("start") || msgLower.includes("end") || msgLower.includes("created"))) return "activity";
+  if (msgLower.includes("agent") && (msgLower.includes("turn") || msgLower.includes("run") || msgLower.includes("spawn"))) return "activity";
+  if (msgLower.includes("message") && (msgLower.includes("received") || msgLower.includes("sent") || msgLower.includes("deliver"))) return "activity";
+  if (msgLower.includes("heartbeat")) return "activity";
+  if (msgLower.includes("cron") || msgLower.includes("scheduled")) return "activity";
+  if (msgLower.includes("tool") && (msgLower.includes("call") || msgLower.includes("exec"))) return "activity";
+  if (msgLower.includes("channel") && (msgLower.includes("connect") || msgLower.includes("start") || msgLower.includes("stop"))) return "activity";
+  if (msgLower.includes("gateway") && (msgLower.includes("start") || msgLower.includes("ready") || msgLower.includes("restart"))) return "activity";
+  if (msgLower.includes("webhook")) return "activity";
+  if (msgLower.includes("model") && msgLower.includes("switch")) return "activity";
+
+  // Remaining info that isn't caught — show as system only if not JSON-like
   if (level === "info") return "system";
 
   return "noise";
