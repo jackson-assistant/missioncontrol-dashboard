@@ -1,34 +1,45 @@
-import { agentUsage } from "@/lib/api-data";
-import { getAgentColor } from "@/lib/data";
+"use client";
+
+import { useAgents } from "@/lib/hooks";
+import { mapApiAgent } from "@/lib/data";
 import { Panel } from "@/components/shared/panel";
+import { EmptyState } from "@/components/shared/empty-state";
 
 export function UsageByAgent() {
+  const { agents: rawAgents, isLoading } = useAgents();
+  const agents = rawAgents.map(mapApiAgent);
+
   return (
     <Panel>
       <h2 className="text-sm font-bold text-foreground">Usage by Agent</h2>
       <p className="text-xs text-muted-foreground">
-        Today&apos;s API consumption per agent
+        API usage tracking not yet available
       </p>
-      <div className="mt-4 grid grid-cols-7 gap-3">
-        {agentUsage.map((agent) => (
-          <div key={agent.agentId} className="text-center">
-            <div
-              className="mx-auto flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ backgroundColor: getAgentColor(agent.agentId) }}
-            >
-              {agent.agentName.slice(0, 2).toUpperCase()}
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {isLoading ? (
+          [1, 2, 3].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded bg-muted" />
+          ))
+        ) : agents.length > 0 ? (
+          agents.map((agent) => (
+            <div key={agent.id} className="text-center">
+              <div
+                className="mx-auto flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{ backgroundColor: agent.color }}
+              >
+                {agent.avatar}
+              </div>
+              <p className="mt-1.5 text-xs font-medium text-subtle">
+                {agent.name}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {agent.status}
+              </p>
             </div>
-            <p className="mt-1.5 text-xs font-medium text-subtle">
-              {agent.agentName}
-            </p>
-            <p className="font-mono text-[11px] font-bold text-foreground">
-              {agent.totalCalls}
-            </p>
-            <p className="text-[10px] text-muted-foreground">
-              ${agent.totalCost.toFixed(2)}
-            </p>
-          </div>
-        ))}
+          ))
+        ) : (
+          <EmptyState message="No agents" className="col-span-3 py-4" />
+        )}
       </div>
     </Panel>
   );

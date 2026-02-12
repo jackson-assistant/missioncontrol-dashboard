@@ -1,44 +1,43 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { logEntries, type LogEntry } from "@/lib/logs-data";
+import { useLogs } from "@/lib/hooks";
+import { mapGatewayLog, type LogEntry } from "@/lib/logs-data";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { FilterBar, type LogFilters } from "@/components/logs/filter-bar";
 import { LogRow } from "@/components/logs/log-row";
 import { DetailPanel } from "@/components/logs/detail-panel";
 import { StatsBar } from "@/components/logs/stats-bar";
 import { Terminal } from "lucide-react";
 
 export default function LogsPage() {
-  const [filters, setFilters] = useState<LogFilters>({
-    agentId: null,
-    level: null,
-    action: null,
-    search: "",
-  });
+  const { logs: rawLogs, isLoading } = useLogs();
+  const [search, setSearch] = useState("");
+  const [levelFilter, setLevelFilter] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
+  const logEntries = useMemo(
+    () => rawLogs.map((raw: any, i: number) => mapGatewayLog(raw, i)),
+    [rawLogs]
+  );
+
   const filteredLogs = useMemo(() => {
-    return logEntries.filter((log) => {
-      if (filters.agentId && log.agentId !== filters.agentId) return false;
-      if (filters.level && log.level !== filters.level) return false;
-      if (filters.action && log.action !== filters.action) return false;
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
+    return logEntries.filter((log: LogEntry) => {
+      if (levelFilter && log.level !== levelFilter) return false;
+      if (search) {
+        const q = search.toLowerCase();
         if (
           !log.summary.toLowerCase().includes(q) &&
           !log.agentName.toLowerCase().includes(q) &&
-          !log.detail.toLowerCase().includes(q) &&
-          !(log.model ?? "").toLowerCase().includes(q)
+          !log.detail.toLowerCase().includes(q)
         ) {
           return false;
         }
       }
       return true;
     });
-  }, [filters]);
+  }, [logEntries, levelFilter, search]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -46,18 +45,50 @@ export default function LogsPage() {
         <PageHeader
           icon={Terminal}
           title="Logs"
-          description="Real-time activity stream across all Clawd agents"
+          description="Real-time gateway log stream"
         />
       </div>
 
       <StatsBar logs={filteredLogs} />
-      <FilterBar filters={filters} onChange={setFilters} resultCount={filteredLogs.length} />
+
+      {/* Simple filter bar */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-dashed px-4 py-2.5">
+        <select
+          value={levelFilter ?? ""}
+          onChange={(e) => setLevelFilter(e.target.value || null)}
+          className="rounded-md border bg-card px-2 py-1 text-[11px] font-medium text-subtle outline-none"
+        >
+          <option value="">All Levels</option>
+          <option value="error">Error</option>
+          <option value="warn">Warning</option>
+          <option value="debug">Debug</option>
+          <option value="info">Info</option>
+        </select>
+
+        <input
+          type="text"
+          placeholder="Search logs..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="rounded-md border bg-card px-2.5 py-1 text-[11px] text-subtle placeholder:text-muted-foreground outline-none"
+        />
+
+        <span className="ml-auto text-[10px] font-medium text-muted-foreground">
+          {filteredLogs.length} entries
+        </span>
+      </div>
 
       <div className="flex flex-1 overflow-hidden">
         <ScrollArea className="flex-1">
           <div>
-            {filteredLogs.length > 0 ? (
-              filteredLogs.map((log) => (
+            {isLoading && filteredLogs.length === 0 ? (
+              <div className="space-y-2 p-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-10 animate-pulse rounded bg-muted" />
+                ))}
+              </div>
+            ) : filteredLogs.length > 0 ? (
+              filteredLogs.map((log: LogEntry) => (
                 <LogRow
                   key={log.id}
                   log={log}

@@ -1,35 +1,15 @@
-import { agents } from "@/lib/data";
-import { dayLabels, getTasksForDay, type CalendarTask } from "@/lib/schedules-data";
+"use client";
+
+import { useCron } from "@/lib/hooks";
+import { dayLabels } from "@/lib/schedules-data";
 import { Panel } from "@/components/shared/panel";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Calendar } from "lucide-react";
 
-function TodayCard({ task }: { task: CalendarTask }) {
-  const agent = agents.find((a) => a.id === task.agentId);
-  const color = agent?.color ?? "#71717A";
-
-  return (
-    <div
-      className="flex items-center gap-4 rounded-xl px-4 py-3"
-      style={{ backgroundColor: color + "CC" }}
-    >
-      <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-        style={{ backgroundColor: color }}
-      >
-        {agent?.avatar ?? "?"}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-white">{task.name}</p>
-        <p className="text-xs text-white/70">{task.agentName}</p>
-      </div>
-      <span className="shrink-0 text-sm font-bold text-white/90">{task.time}</span>
-    </div>
-  );
-}
-
 export function TodayView() {
+  const { cron, isLoading } = useCron();
+  const jobs = cron?.jobs || [];
   const today = new Date().getDay();
-  const tasks = getTasksForDay(today);
 
   return (
     <div className="mx-6 space-y-4">
@@ -39,21 +19,32 @@ export function TodayView() {
           <h2 className="text-sm font-bold text-foreground">
             {dayLabels[today]}&apos;s Schedule
           </h2>
-          <span className="text-xs text-muted-foreground">
-            {tasks.length} tasks
-          </span>
         </div>
 
-        {tasks.length > 0 ? (
+        {isLoading ? (
           <div className="space-y-2">
-            {tasks.map((task) => (
-              <TodayCard key={task.id} task={task} />
+            {[1, 2].map((i) => (
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        ) : jobs.length > 0 ? (
+          <div className="space-y-2">
+            {jobs.map((job: any, i: number) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 rounded-xl bg-stone-100 px-4 py-3 dark:bg-zinc-700"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {job.name || job.command || "Cron Job"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{job.schedule || "—"}</p>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No scheduled tasks for today
-          </p>
+          <EmptyState message="No scheduled tasks for today" className="py-8" />
         )}
       </Panel>
     </div>

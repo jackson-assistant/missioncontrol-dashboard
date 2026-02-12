@@ -1,64 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { feedEntries, agents, getAgentById } from "@/lib/data";
-import type { FeedEntry } from "@/lib/data";
+import { useAgents, useLogs } from "@/lib/hooks";
+import { mapApiAgent } from "@/lib/data";
+import { mapGatewayLog } from "@/lib/logs-data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronRight } from "lucide-react";
 import { SectionHeader } from "@/components/shared/section-header";
 import { EmptyState } from "@/components/shared/empty-state";
 
-const feedTabs = [
-  { key: "all", label: "All" },
-  { key: "task", label: "Tasks" },
-  { key: "comment", label: "Comments" },
-  { key: "status", label: "Status" },
-] as const;
-
-function FeedItem({ entry }: { entry: FeedEntry }) {
-  const agent = getAgentById(entry.agentId);
-  if (!agent) return null;
-
-  return (
-    <div className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-stone-100/50 dark:hover:bg-zinc-800/50">
-      <Avatar size="sm">
-        <AvatarFallback
-          style={{ backgroundColor: agent.color, color: "white" }}
-          className="text-[9px] font-bold"
-        >
-          {agent.avatar}
-        </AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs leading-relaxed text-subtle">
-          {entry.content}
-        </p>
-        <span className="mt-0.5 block text-[10px] text-muted-foreground">
-          {agent.name} &middot; {entry.timestamp}
-        </span>
-      </div>
-    </div>
-  );
+interface FeedItem {
+  id: string;
+  level: string;
+  message: string;
+  time: string;
+  subsystem: string;
 }
 
 export function LiveFeed() {
-  const [activeTab, setActiveTab] = useState<string>("all");
-  const [activeAgent, setActiveAgent] = useState<string | null>(null);
+  const { logs, isLoading: logsLoading } = useLogs();
+  const { agents: rawAgents } = useAgents();
+  const agents = rawAgents.map(mapApiAgent);
+  const [activeLevel, setActiveLevel] = useState<string | null>(null);
 
-  const filteredEntries = feedEntries.filter((entry) => {
-    if (activeTab !== "all" && entry.type !== activeTab) return false;
-    if (activeAgent && entry.agentId !== activeAgent) return false;
-    return true;
-  });
+  const feedItems = logs.map((log: any, i: number) => ({
+    id: `feed-${i}`,
+    level: log.level,
+    message: log.message,
+    time: log.time ? new Date(log.time).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "",
+    subsystem: log.subsystem || "system",
+  }));
 
-  const agentCounts = agents.reduce(
-    (acc, agent) => {
-      acc[agent.id] = feedEntries.filter((e) => e.agentId === agent.id).length;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
+  const filtered = activeLevel
+    ? feedItems.filter((f: FeedItem) => f.level === activeLevel)
+    : feedItems;
+
+  const levelTabs = [
+    { key: null, label: "All" },
+    { key: "error", label: "Errors" },
+    { key: "warn", label: "Warnings" },
+    { key: "debug", label: "Debug" },
+  ] as const;
 
   const tabClass = (isActive: boolean) =>
     `rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
@@ -67,12 +49,12 @@ export function LiveFeed() {
         : "text-dim hover:bg-stone-200 dark:hover:bg-zinc-800"
     }`;
 
-  const pillClass = (isActive: boolean) =>
-    `flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors ${
-      isActive
-        ? "border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
-        : "border-stone-200 bg-muted text-dim hover:bg-stone-200 dark:border-zinc-700 dark:hover:bg-zinc-700"
-    }`;
+  const levelDot: Record<string, string> = {
+    error: "bg-rose-500",
+    warn: "bg-amber-500",
+    debug: "bg-stone-400",
+    info: "bg-blue-400",
+  };
 
   return (
     <aside className="flex w-[320px] shrink-0 flex-col border-l border-dashed bg-stone-50/50 dark:bg-zinc-800/60">
@@ -80,54 +62,44 @@ export function LiveFeed() {
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-1 border-b border-dashed px-4 py-2">
-        {feedTabs.map((tab) => (
+        {levelTabs.map((tab) => (
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={tabClass(activeTab === tab.key)}
+            key={tab.key ?? "all"}
+            onClick={() => setActiveLevel(tab.key)}
+            className={tabClass(activeLevel === tab.key)}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Agent Filter Pills */}
-      <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto border-b border-dashed px-4 py-2">
-        <button
-          onClick={() => setActiveAgent(null)}
-          className={pillClass(!activeAgent)}
-        >
-          All Agents
-        </button>
-        {agents.map((agent) => (
-          <button
-            key={agent.id}
-            onClick={() =>
-              setActiveAgent(agent.id === activeAgent ? null : agent.id)
-            }
-            className={pillClass(activeAgent === agent.id)}
-          >
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ backgroundColor: agent.color }}
-            />
-            {agent.name}
-            {agentCounts[agent.id] > 0 && (
-              <span className="opacity-60">{agentCounts[agent.id]}</span>
-            )}
-          </button>
-        ))}
-        <button className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-dim transition-colors hover:bg-stone-300 dark:hover:bg-zinc-600">
-          <ChevronRight className="h-3 w-3" />
-        </button>
-      </div>
-
       {/* Feed Entries */}
       <ScrollArea className="flex-1">
         <div className="divide-y divide-dashed divide-stone-200 dark:divide-zinc-800">
-          {filteredEntries.length > 0 ? (
-            filteredEntries.map((entry) => (
-              <FeedItem key={entry.id} entry={entry} />
+          {logsLoading && filtered.length === 0 ? (
+            <div className="space-y-2 p-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-8 animate-pulse rounded bg-muted" />
+              ))}
+            </div>
+          ) : filtered.length > 0 ? (
+            filtered.map((item: FeedItem) => (
+              <div
+                key={item.id}
+                className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-stone-100/50 dark:hover:bg-zinc-800/50"
+              >
+                <span
+                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${levelDot[item.level] || "bg-stone-400"}`}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs leading-relaxed text-subtle break-all">
+                    {item.message}
+                  </p>
+                  <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                    {item.subsystem} &middot; {item.time}
+                  </span>
+                </div>
+              </div>
             ))
           ) : (
             <EmptyState message="No activity to show" className="py-8" />

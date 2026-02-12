@@ -2,8 +2,8 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { agents } from "@/lib/data";
-import { agentProfiles } from "@/lib/agent-profile-data";
+import { useAgent } from "@/lib/hooks";
+import { mapApiAgent } from "@/lib/data";
 import { AgentsPanel } from "@/components/shared/agents-panel";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -20,11 +20,20 @@ import { Cpu, Clock, FileText, Radio, ArrowLeft } from "lucide-react";
 export default function AgentProfilePage() {
   const params = useParams();
   const agentId = params.id as string;
+  const { agent: apiAgent, isLoading } = useAgent(agentId);
 
-  const agent = agents.find((a) => a.id === agentId);
-  const profile = agentProfiles[agentId];
+  if (isLoading) {
+    return (
+      <div className="flex h-full overflow-hidden">
+        <AgentsPanel />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+        </div>
+      </div>
+    );
+  }
 
-  if (!agent || !profile) {
+  if (!apiAgent) {
     return (
       <div className="flex h-full overflow-hidden">
         <AgentsPanel />
@@ -42,6 +51,8 @@ export default function AgentProfilePage() {
     );
   }
 
+  const agent = mapApiAgent({ ...apiAgent, index: 0 });
+
   return (
     <div className="flex h-full overflow-hidden">
       <AgentsPanel />
@@ -49,7 +60,6 @@ export default function AgentProfilePage() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <ScrollArea className="flex-1">
           <div className="p-6">
-            {/* Back link */}
             <Link
               href="/"
               className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-subtle"
@@ -58,7 +68,6 @@ export default function AgentProfilePage() {
               Dashboard
             </Link>
 
-            {/* Agent Header */}
             <div className="flex items-start gap-4">
               <Avatar className="h-14 w-14">
                 <AvatarFallback
@@ -76,24 +85,21 @@ export default function AgentProfilePage() {
                   <RoleBadge role={agent.role} className="px-2 py-0.5" />
                   <StatusDot status={agent.status} label />
                 </div>
-                <p className="mt-0.5 text-sm text-dim">{agent.title}</p>
+                <p className="mt-0.5 text-sm text-dim">{apiAgent.emoji}</p>
                 <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Cpu className="h-3 w-3" />
-                    <CodeBadge>{profile.model}</CodeBadge>
+                    <CodeBadge>{apiAgent.model}</CodeBadge>
                   </span>
                   <span>&middot;</span>
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    Uptime {profile.uptime}
+                    Last active {apiAgent.lastActive}
                   </span>
-                  <span>&middot;</span>
-                  <span>Last active {profile.lastActive}</span>
                 </div>
               </div>
             </div>
 
-            {/* Tabs */}
             <Tabs defaultValue="overview" className="mt-6">
               <TabsList variant="line">
                 <TabsTrigger value="overview" className="gap-1.5">
