@@ -112,7 +112,7 @@ export function FilesTab({ agentId }: { agentId: string }) {
                 <span>Modified {selectedFile.lastModified}</span>
               </div>
             </div>
-            <ScrollArea className="flex-1">
+            <ScrollArea className="h-0 flex-1">
               <pre className="p-4 font-mono text-xs leading-relaxed text-subtle whitespace-pre-wrap break-words md:whitespace-pre">
                 {selectedFile.content}
               </pre>
