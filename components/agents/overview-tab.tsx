@@ -1,12 +1,14 @@
 "use client";
 
-import { useAgent } from "@/lib/hooks";
+import { useAgent, useTasks } from "@/lib/hooks";
 import { Panel } from "@/components/shared/panel";
 import { StatCard } from "@/components/shared/stat-card";
 import { Cpu, Radio, Users } from "lucide-react";
 
 export function OverviewTab({ agentId }: { agentId: string }) {
   const { agent, isLoading } = useAgent(agentId);
+  const { tasks } = useTasks();
+  const agentTasks = tasks.filter((t: any) => t.assignee_id === agentId);
 
   if (isLoading) {
     return (
@@ -54,9 +56,32 @@ export function OverviewTab({ agentId }: { agentId: string }) {
 
       <Panel>
         <h3 className="text-sm font-bold text-foreground">Current Tasks</h3>
-        <p className="mt-3 text-xs italic text-muted-foreground">
-          No task tracking available yet
-        </p>
+        {agentTasks.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {agentTasks.map((task: any) => (
+              <div key={task.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-foreground">{task.title}</p>
+                  {task.description && (
+                    <p className="truncate text-[11px] text-muted-foreground">{task.description}</p>
+                  )}
+                </div>
+                <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase ${
+                  task.status === "done" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                  task.status === "in_progress" ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400" :
+                  task.status === "review" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
+                  "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                }`}>
+                  {task.status.replace("_", " ")}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-xs italic text-muted-foreground">
+            No tasks assigned to this agent
+          </p>
+        )}
       </Panel>
     </div>
   );

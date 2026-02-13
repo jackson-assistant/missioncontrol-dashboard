@@ -14,7 +14,7 @@ import { Terminal } from "lucide-react";
 export default function LogsPage() {
   const { logs: rawLogs, isLoading } = useLogs();
   const [search, setSearch] = useState("");
-  const [levelFilter, setLevelFilter] = useState<string | null>(null);
+  const [levelFilter, setLevelFilter] = useState<string | null>("no-debug");
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
   const logEntries = useMemo(
@@ -24,7 +24,8 @@ export default function LogsPage() {
 
   const filteredLogs = useMemo(() => {
     return logEntries.filter((log: LogEntry) => {
-      if (levelFilter && log.level !== levelFilter) return false;
+      if (levelFilter === "no-debug" && log.level === "debug") return false;
+      else if (levelFilter && levelFilter !== "no-debug" && log.level !== levelFilter) return false;
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -59,10 +60,11 @@ export default function LogsPage() {
           className="rounded-md border bg-card px-2 py-1 text-[11px] font-medium text-subtle outline-none"
         >
           <option value="">All Levels</option>
+          <option value="no-debug">Hide Debug</option>
           <option value="error">Error</option>
           <option value="warn">Warning</option>
-          <option value="debug">Debug</option>
           <option value="info">Info</option>
+          <option value="debug">Debug Only</option>
         </select>
 
         <input

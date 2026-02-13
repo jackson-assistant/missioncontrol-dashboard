@@ -22,7 +22,7 @@ function migrate(db: Database.Database) {
       title TEXT NOT NULL,
       description TEXT DEFAULT '',
       status TEXT NOT NULL DEFAULT 'inbox'
-        CHECK(status IN ('inbox', 'assigned', 'in_progress', 'review', 'done')),
+        CHECK(status IN ('inbox', 'in_progress', 'review', 'done')),
       assignee_id TEXT,
       priority TEXT DEFAULT 'normal'
         CHECK(priority IN ('low', 'normal', 'high', 'urgent')),

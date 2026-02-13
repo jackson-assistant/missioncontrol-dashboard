@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { COLUMN_CONFIG } from "@/lib/data";
 import type { TaskStatus } from "@/lib/data";
 import { useTasks, useAgents } from "@/lib/hooks";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SectionHeader } from "@/components/shared/section-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Inbox, Plus, X, GripVertical, Trash2, ChevronRight } from "lucide-react";
+import { Inbox, Plus, X, GripVertical, Trash2, ChevronRight, RefreshCw } from "lucide-react";
 
 const columnDotColors: Record<TaskStatus, string> = {
   inbox: "bg-amber-400",
-  assigned: "bg-blue-400",
   in_progress: "bg-violet-400",
   review: "bg-orange-400",
   done: "bg-emerald-400",
@@ -170,6 +168,23 @@ function AddTaskForm({
 export function MissionQueue() {
   const { tasks, mutate } = useTasks();
   const [addingTo, setAddingTo] = useState<TaskStatus | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await fetch("/api/tasks/sync", { method: "POST" });
+      mutate();
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Auto-sync on mount
+  useEffect(() => {
+    fetch("/api/tasks/sync", { method: "POST" }).then(() => mutate());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const tasksByStatus = COLUMN_CONFIG.reduce(
     (acc, col) => {
@@ -210,7 +225,18 @@ export function MissionQueue() {
 
   return (
     <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
-      <SectionHeader title="Mission Queue" />
+      <div className="flex items-center justify-between border-b border-dashed px-4 py-2.5">
+        <span className="text-xs font-bold uppercase tracking-wider text-subtle">Mission Queue</span>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-medium text-dim transition-colors hover:bg-muted hover:text-foreground"
+          title="Sync tasks from active sessions"
+        >
+          <RefreshCw className={`h-3 w-3 ${syncing ? "animate-spin" : ""}`} />
+          Sync
+        </button>
+      </div>
 
       <div className="flex flex-1 overflow-hidden">
         {COLUMN_CONFIG.map((col) => {

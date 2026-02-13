@@ -2,7 +2,7 @@
 
 export type AgentRole = "LEAD" | "INT" | "SPC";
 export type AgentStatus = "WORKING" | "IDLE" | "OFFLINE";
-export type TaskStatus = "inbox" | "assigned" | "in_progress" | "review" | "done";
+export type TaskStatus = "inbox" | "in_progress" | "review" | "done";
 export type FeedType = "comment" | "task" | "status";
 
 export interface Agent {
@@ -92,7 +92,6 @@ export function mapApiAgent(apiAgent: any): Agent {
 /** Column definitions for the kanban board */
 export const COLUMN_CONFIG: { key: TaskStatus; label: string }[] = [
   { key: "inbox", label: "INBOX" },
-  { key: "assigned", label: "ASSIGNED" },
   { key: "in_progress", label: "IN PROGRESS" },
   { key: "review", label: "REVIEW" },
   { key: "done", label: "DONE" },
