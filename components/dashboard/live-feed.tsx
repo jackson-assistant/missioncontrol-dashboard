@@ -21,8 +21,13 @@ interface FeedItem {
 function cleanMessage(msg: string): string {
   // Strip JSON subsystem prefixes like {"subsystem":"agent/embedded"}
   let clean = msg.replace(/^\{[^}]*\}\s*/, "");
+  // Strip runId=xxx, toolCallId=xxx noise
+  clean = clean.replace(/\s*runId=[a-f0-9-]+/g, "");
+  clean = clean.replace(/\s*toolCallId=[a-zA-Z0-9_-]+/g, "");
+  // Strip "embedded run" prefix — just show the action
+  clean = clean.replace(/^embedded run\s+/, "");
   // Trim to reasonable length
-  if (clean.length > 150) clean = clean.slice(0, 147) + "...";
+  if (clean.length > 120) clean = clean.slice(0, 117) + "...";
   return clean;
 }
 
@@ -48,14 +53,8 @@ function classifyLog(log: any): { category: "activity" | "system" | "noise"; ico
   if (msg.startsWith("{") && !msg.includes("embedded run")) return { category: "noise", icon: "" };
   if (msg.length < 5) return { category: "noise", icon: "" };
 
-  // Debug noise — skip most debug, but keep agent activity debug
-  if (level === "debug") {
-    if (msg.includes("embedded run agent start")) return { category: "activity", icon: "🚀" };
-    if (msg.includes("embedded run agent end")) return { category: "activity", icon: "✅" };
-    if (msg.includes("embedded run tool start")) return { category: "activity", icon: "🔧" };
-    if (msg.includes("embedded run tool end")) return { category: "activity", icon: "🔧" };
-    return { category: "noise", icon: "" };
-  }
+  // Debug level — all noise. Agent/tool events are too granular for a feed.
+  if (level === "debug") return { category: "noise", icon: "" };
 
   // Errors and warnings — show but as system
   if (level === "error") return { category: "system", icon: "❌" };
