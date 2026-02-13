@@ -1,33 +1,43 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { channelStatuses, type ChannelStatus } from "@/lib/agent-profile-data";
+import { useChannels } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/shared/panel";
+import { EmptyState } from "@/components/shared/empty-state";
 import { RefreshCw } from "lucide-react";
 
-function ChannelCard({ channel }: { channel: ChannelStatus }) {
-  const allConnected = channel.connected === channel.total;
+function ChannelCard({ name, channel }: { name: string; channel: any }) {
+  const probeOk = channel.probe?.ok;
 
   return (
     <Panel className="bg-stone-50 dark:bg-zinc-800/80">
       <div className="flex items-start justify-between">
         <div>
-          <h4 className="text-sm font-bold text-foreground">{channel.name}</h4>
-          <p className="text-xs text-muted-foreground">{channel.type}</p>
+          <h4 className="text-sm font-bold text-foreground capitalize">{name}</h4>
+          <p className="text-xs text-muted-foreground">
+            {channel.configured ? "Configured" : "Not configured"}
+          </p>
         </div>
         <div className="space-y-0.5 text-right">
           <p className="text-xs text-subtle">
-            <span className={`font-bold ${allConnected ? "text-emerald-500" : "text-amber-500"}`}>
-              {channel.connected}/{channel.total}
-            </span>{" "}
-            connected
+            <span className={`font-bold ${channel.running ? "text-emerald-500" : "text-stone-400"}`}>
+              {channel.running ? "Running" : "Stopped"}
+            </span>
           </p>
-          <p className="text-xs text-dim">{channel.configured} configured</p>
-          <p className="text-xs text-dim">{channel.enabled} enabled</p>
-          <p className="text-xs text-dim">groupPolicy: {channel.groupPolicy}</p>
-          <p className="text-xs text-dim">streamMode: {channel.streamMode}</p>
-          <p className="text-xs text-dim">dmPolicy: {channel.dmPolicy}</p>
+          {channel.probe && (
+            <p className="text-xs text-dim">
+              Probe: {probeOk ? "✅ OK" : "❌ Failed"} ({channel.probe.elapsedMs}ms)
+            </p>
+          )}
+          {channel.probe?.bot && (
+            <p className="text-xs text-dim">
+              Bot: @{channel.probe.bot.username}
+            </p>
+          )}
+          {channel.mode && (
+            <p className="text-xs text-dim">Mode: {channel.mode}</p>
+          )}
         </div>
       </div>
     </Panel>
@@ -35,12 +45,14 @@ function ChannelCard({ channel }: { channel: ChannelStatus }) {
 }
 
 export function ChannelsTab() {
+  const { channels, isLoading, mutate } = useChannels();
   const [lastRefresh, setLastRefresh] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = () => {
     setRefreshing(true);
     setLastRefresh(0);
+    mutate();
     setTimeout(() => setRefreshing(false), 600);
   };
 
@@ -50,6 +62,10 @@ export function ChannelsTab() {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const channelEntries = channels?.channels
+    ? Object.entries(channels.channels)
+    : [];
 
   return (
     <div className="space-y-4">
@@ -65,15 +81,25 @@ export function ChannelsTab() {
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3 w-3 ${refreshing || isLoading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
 
         <div className="mt-4 space-y-3">
-          {channelStatuses.map((channel) => (
-            <ChannelCard key={channel.name} channel={channel} />
-          ))}
+          {isLoading && channelEntries.length === 0 ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
+              ))}
+            </div>
+          ) : channelEntries.length > 0 ? (
+            channelEntries.map(([name, channel]) => (
+              <ChannelCard key={name} name={name} channel={channel} />
+            ))
+          ) : (
+            <EmptyState message="No channels configured" className="py-4" />
+          )}
         </div>
       </Panel>
     </div>

@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { agents, tasks } from "@/lib/data";
+import { useAgents } from "@/lib/hooks";
+import { mapApiAgent } from "@/lib/data";
 import { FileText, LayoutDashboard, Activity, Terminal, CalendarClock, Settings } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -28,8 +29,10 @@ export function TopBar() {
     return () => clearInterval(timer);
   }, []);
 
+  const { agents: rawAgents } = useAgents();
+  const agents = rawAgents.map(mapApiAgent);
   const activeAgents = agents.filter((a) => a.status === "WORKING").length;
-  const totalTasks = tasks.length;
+  const totalTasks = 0;
 
   const formatTime = (date: Date) =>
     date.toLocaleTimeString("en-US", {

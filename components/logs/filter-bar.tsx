@@ -1,10 +1,6 @@
 "use client";
 
-import { agents } from "@/lib/data";
 import {
-  getUniqueAgents,
-  getUniqueActions,
-  getUniqueLevels,
   actionLabels,
   type LogLevel,
   type LogAction,
@@ -31,10 +27,6 @@ export function FilterBar({
   onChange: (f: LogFilters) => void;
   resultCount: number;
 }) {
-  const uniqueAgents = getUniqueAgents();
-  const uniqueLevels = getUniqueLevels();
-  const uniqueActions = getUniqueActions();
-
   const hasFilters =
     filters.agentId || filters.level || filters.action || filters.search;
 
@@ -43,41 +35,15 @@ export function FilterBar({
       <Filter className="h-3.5 w-3.5 text-muted-foreground" />
 
       <select
-        value={filters.agentId ?? ""}
-        onChange={(e) => onChange({ ...filters, agentId: e.target.value || null })}
-        className={selectClass}
-      >
-        <option value="">All Agents</option>
-        {uniqueAgents.map((id) => {
-          const agent = agents.find((a) => a.id === id);
-          return (
-            <option key={id} value={id}>
-              {agent?.name ?? id}
-            </option>
-          );
-        })}
-      </select>
-
-      <select
         value={filters.level ?? ""}
         onChange={(e) => onChange({ ...filters, level: (e.target.value as LogLevel) || null })}
         className={selectClass}
       >
         <option value="">All Levels</option>
-        {uniqueLevels.map((level) => (
-          <option key={level} value={level}>{level.toUpperCase()}</option>
-        ))}
-      </select>
-
-      <select
-        value={filters.action ?? ""}
-        onChange={(e) => onChange({ ...filters, action: (e.target.value as LogAction) || null })}
-        className={selectClass}
-      >
-        <option value="">All Actions</option>
-        {uniqueActions.map((action) => (
-          <option key={action} value={action}>{actionLabels[action]}</option>
-        ))}
+        <option value="error">Error</option>
+        <option value="warn">Warning</option>
+        <option value="debug">Debug</option>
+        <option value="info">Info</option>
       </select>
 
       <input

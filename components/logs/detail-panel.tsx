@@ -1,4 +1,3 @@
-import { agents } from "@/lib/data";
 import { actionLabels, levelColors, type LogEntry } from "@/lib/logs-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,8 +17,6 @@ function DetailSection({ label, children }: { label: string; children: React.Rea
 }
 
 export function DetailPanel({ log, onClose }: { log: LogEntry; onClose: () => void }) {
-  const agent = agents.find((a) => a.id === log.agentId);
-
   const metaItems = [
     log.model && { icon: Cpu, label: "Model", value: <CodeBadge>{log.model}</CodeBadge> },
     log.tokens !== undefined && log.tokens > 0 && {
@@ -41,7 +38,6 @@ export function DetailPanel({ log, onClose }: { log: LogEntry; onClose: () => vo
 
   return (
     <div className="flex w-[380px] shrink-0 flex-col border-l border-dashed bg-stone-50/50 dark:bg-zinc-800/60">
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-dashed px-4 py-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
           Log Detail
@@ -53,41 +49,30 @@ export function DetailPanel({ log, onClose }: { log: LogEntry; onClose: () => vo
 
       <ScrollArea className="flex-1">
         <div className="space-y-4 p-4">
-          {/* Agent + Time */}
           <div className="flex items-center gap-3">
-            <span
-              className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ backgroundColor: agent?.color ?? "#888" }}
-            >
-              {agent?.avatar ?? "??"}
-            </span>
             <div>
               <p className="text-sm font-semibold text-foreground">{log.agentName}</p>
               <p className="font-mono text-[11px] text-muted-foreground">{log.timestamp}</p>
             </div>
           </div>
 
-          {/* Level + Action */}
           <div className="flex items-center gap-2">
-            <Badge className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${levelColors[log.level]}`}>
+            <Badge className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${levelColors[log.level] || levelColors.info}`}>
               {log.level}
             </Badge>
             <span className="text-xs font-medium text-subtle">
-              {actionLabels[log.action]}
+              {actionLabels[log.action] || log.action}
             </span>
           </div>
 
-          {/* Summary */}
           <DetailSection label="Summary">
             <p className="text-sm text-subtle">{log.summary}</p>
           </DetailSection>
 
-          {/* Detail */}
           <DetailSection label="Detail">
-            <p className="text-xs leading-relaxed text-dim">{log.detail}</p>
+            <p className="text-xs leading-relaxed text-dim break-all">{log.detail}</p>
           </DetailSection>
 
-          {/* Metadata */}
           {metaItems.length > 0 && (
             <DetailSection label="Metadata">
               <div className="space-y-1.5">

@@ -1,51 +1,42 @@
-import { agents, getAgentColor } from "@/lib/data";
-import { dayLabels, getTasksForDay, type CalendarTask } from "@/lib/schedules-data";
+"use client";
+
+import { useMemo } from "react";
+import { useCron } from "@/lib/hooks";
+import { dayLabels } from "@/lib/schedules-data";
+import { parseCron, runsOnDay, formatCronTime, describeCron } from "@/lib/cron-utils";
 import { Panel } from "@/components/shared/panel";
 
-function AgentDot({ agentId }: { agentId: string }) {
-  const agent = agents.find((a) => a.id === agentId);
-  if (!agent) return null;
-  return (
-    <span
-      className="inline-block h-3 w-3 shrink-0 rounded-full text-[6px] font-bold leading-3 text-center text-white"
-      style={{ backgroundColor: agent.color }}
-      title={agent.name}
-    >
-      {agent.avatar}
-    </span>
-  );
-}
-
-function TaskBlock({ task }: { task: CalendarTask }) {
-  const color = getAgentColor(task.agentId);
-
-  return (
-    <div
-      className="rounded-lg px-2.5 py-1.5"
-      style={{ backgroundColor: color + "CC" }}
-    >
-      <p className="truncate text-[11px] font-medium text-white">
-        {task.name}
-      </p>
-      <div className="mt-0.5 flex items-center gap-1.5">
-        <AgentDot agentId={task.agentId} />
-        <span className="truncate text-[9px] text-white/60">
-          {task.agentName}
-        </span>
-        <span className="ml-auto text-[9px] text-white/70">{task.time}</span>
-      </div>
-    </div>
-  );
-}
-
 export function WeeklyCalendar() {
+  const { cron, isLoading } = useCron();
+  const jobs = cron?.jobs || [];
   const today = new Date().getDay();
+
+  // Parse all cron jobs and determine which days they run on
+  const parsedJobs = useMemo(() => {
+    return jobs
+      .filter((job: any) => job.enabled !== false)
+      .map((job: any) => {
+        const schedule = job.schedule;
+        if (!schedule || schedule.kind !== "cron" || !schedule.expr) {
+          return { job, parsed: null, time: "—", description: "—" };
+        }
+        const parsed = parseCron(schedule.expr);
+        return {
+          job,
+          parsed,
+          time: parsed ? formatCronTime(parsed) : "—",
+          description: describeCron(schedule.expr, schedule.tz),
+        };
+      });
+  }, [jobs]);
 
   return (
     <div className="mx-6 grid grid-cols-7 gap-2">
       {dayLabels.map((label, dayIndex) => {
-        const tasks = getTasksForDay(dayIndex);
         const isToday = dayIndex === today;
+        const dayJobs = parsedJobs.filter(
+          (pj: any) => pj.parsed && runsOnDay(pj.parsed, dayIndex)
+        );
 
         return (
           <Panel
@@ -70,9 +61,28 @@ export function WeeklyCalendar() {
               )}
             </div>
             <div className="flex flex-1 flex-col gap-1.5 p-2">
-              {tasks.map((task) => (
-                <TaskBlock key={task.id} task={task} />
-              ))}
+              {isLoading ? (
+                <div className="h-8 animate-pulse rounded bg-muted" />
+              ) : dayJobs.length > 0 ? (
+                dayJobs.map((pj: any) => (
+                  <div
+                    key={pj.job.id || pj.job.name}
+                    className="rounded-md bg-stone-100 px-2 py-1.5 dark:bg-zinc-700"
+                  >
+                    <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                      {pj.time}
+                    </p>
+                    <p className="mt-0.5 truncate text-[10px] font-medium text-foreground">
+                      {pj.job.name || "Cron Job"}
+                    </p>
+                    <p className="truncate text-[9px] text-muted-foreground">
+                      {pj.job.agentId || "—"}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[10px] text-muted-foreground">—</p>
+              )}
             </div>
           </Panel>
         );

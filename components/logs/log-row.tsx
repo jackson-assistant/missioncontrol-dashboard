@@ -1,4 +1,3 @@
-import { agents } from "@/lib/data";
 import { actionLabels, levelColors, type LogEntry } from "@/lib/logs-data";
 import { Badge } from "@/components/ui/badge";
 import { CodeBadge } from "@/components/shared/code-badge";
@@ -13,8 +12,6 @@ export function LogRow({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const agent = agents.find((a) => a.id === log.agentId);
-
   return (
     <button
       onClick={onClick}
@@ -28,26 +25,18 @@ export function LogRow({
         {log.timestamp}
       </span>
 
-      <div className="flex w-[90px] shrink-0 items-center gap-1.5">
-        <span
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
-          style={{ backgroundColor: agent?.color ?? "#888" }}
-        >
-          {agent?.avatar ?? "??"}
-        </span>
-        <span className="truncate text-[11px] font-medium text-subtle">
-          {log.agentName}
-        </span>
-      </div>
+      <span className="w-[90px] shrink-0 truncate text-[11px] font-medium text-subtle">
+        {log.agentName}
+      </span>
 
       <Badge
-        className={`w-[54px] shrink-0 justify-center rounded px-1.5 py-0 text-[9px] font-bold uppercase ${levelColors[log.level]}`}
+        className={`w-[54px] shrink-0 justify-center rounded px-1.5 py-0 text-[9px] font-bold uppercase ${levelColors[log.level] || levelColors.info}`}
       >
         {log.level}
       </Badge>
 
       <span className="w-[100px] shrink-0 truncate text-[11px] font-medium text-subtle">
-        {actionLabels[log.action]}
+        {actionLabels[log.action] || log.action}
       </span>
 
       <span className="min-w-0 flex-1 truncate text-[11px] text-dim">

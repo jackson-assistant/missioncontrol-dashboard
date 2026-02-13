@@ -1,17 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { workspaceFiles, type WorkspaceFile } from "@/lib/agent-profile-data";
+import { useState, useEffect } from "react";
+import { useAgentFiles } from "@/lib/hooks";
+import type { WorkspaceFile } from "@/lib/agent-profile-data";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Panel } from "@/components/shared/panel";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FileText } from "lucide-react";
 
 export function FilesTab({ agentId }: { agentId: string }) {
-  const files = workspaceFiles[agentId] ?? [];
-  const [selectedFile, setSelectedFile] = useState<WorkspaceFile | null>(
-    files[0] ?? null
-  );
+  const { workspace, files, isLoading } = useAgentFiles(agentId);
+  const [selectedFile, setSelectedFile] = useState<WorkspaceFile | null>(null);
+
+  // Auto-select first file when loaded
+  useEffect(() => {
+    if (files.length > 0 && !selectedFile) {
+      setSelectedFile(files[0]);
+    }
+  }, [files, selectedFile]);
+
+  if (isLoading && files.length === 0) {
+    return (
+      <Panel padding="none" className="flex h-[calc(100vh-280px)] overflow-hidden">
+        <div className="flex flex-1 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+        </div>
+      </Panel>
+    );
+  }
 
   return (
     <Panel padding="none" className="flex h-[calc(100vh-280px)] overflow-hidden">
@@ -22,12 +38,12 @@ export function FilesTab({ agentId }: { agentId: string }) {
             Workspace Files
           </p>
           <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-            /home/openclaw/.openclaw/workspace-tweetbot/
+            {workspace}/
           </p>
         </div>
         <ScrollArea className="h-[calc(100%-52px)]">
           <div className="p-1.5">
-            {files.map((file) => {
+            {files.map((file: WorkspaceFile) => {
               const isSelected = selectedFile?.name === file.name;
               return (
                 <button
@@ -55,6 +71,9 @@ export function FilesTab({ agentId }: { agentId: string }) {
                 </button>
               );
             })}
+            {files.length === 0 && (
+              <EmptyState message="No files found" className="py-4" />
+            )}
           </div>
         </ScrollArea>
       </div>

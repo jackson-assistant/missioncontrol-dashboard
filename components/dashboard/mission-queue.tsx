@@ -1,11 +1,12 @@
 "use client";
 
-import { COLUMN_CONFIG, getTasksByStatus } from "@/lib/data";
+import { COLUMN_CONFIG } from "@/lib/data";
 import type { TaskStatus } from "@/lib/data";
-import { TaskCard } from "./task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { SectionHeader } from "@/components/shared/section-header";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Inbox } from "lucide-react";
 
 const columnDotColors: Record<TaskStatus, string> = {
   inbox: "bg-amber-400",
@@ -22,40 +23,42 @@ export function MissionQueue() {
 
       {/* Kanban Columns */}
       <div className="flex flex-1 overflow-hidden">
-        {COLUMN_CONFIG.map((col) => {
-          const columnTasks = getTasksByStatus(col.key);
-          return (
-            <div
-              key={col.key}
-              className="flex min-w-0 flex-1 flex-col border-r border-dashed last:border-r-0"
-            >
-              {/* Column Header */}
-              <div className="flex items-center gap-2 border-b border-dashed px-3 py-2.5">
-                <span
-                  className={`h-2 w-2 rounded-full ${columnDotColors[col.key]}`}
-                />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-subtle">
-                  {col.label}
-                </span>
-                <Badge
-                  variant="secondary"
-                  className="ml-auto flex h-5 min-w-[20px] items-center justify-center bg-secondary/70 p-0 text-[10px] text-dim"
-                >
-                  {columnTasks.length}
-                </Badge>
-              </div>
-
-              {/* Column Tasks */}
-              <ScrollArea className="flex-1">
-                <div className="space-y-2 p-2">
-                  {columnTasks.map((task) => (
-                    <TaskCard key={task.id} task={task} />
-                  ))}
-                </div>
-              </ScrollArea>
+        {COLUMN_CONFIG.map((col) => (
+          <div
+            key={col.key}
+            className="flex min-w-0 flex-1 flex-col border-r border-dashed last:border-r-0"
+          >
+            {/* Column Header */}
+            <div className="flex items-center gap-2 border-b border-dashed px-3 py-2.5">
+              <span
+                className={`h-2 w-2 rounded-full ${columnDotColors[col.key]}`}
+              />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-subtle">
+                {col.label}
+              </span>
+              <Badge
+                variant="secondary"
+                className="ml-auto flex h-5 min-w-[20px] items-center justify-center bg-secondary/70 p-0 text-[10px] text-dim"
+              >
+                0
+              </Badge>
             </div>
-          );
-        })}
+
+            {/* Empty Column */}
+            <ScrollArea className="flex-1">
+              <div className="p-2">
+                {col.key === "inbox" ? (
+                  <EmptyState
+                    icon={Inbox}
+                    message="No tasks yet"
+                    hint="Tasks will appear here when created"
+                    className="py-8"
+                  />
+                ) : null}
+              </div>
+            </ScrollArea>
+          </div>
+        ))}
       </div>
     </section>
   );
