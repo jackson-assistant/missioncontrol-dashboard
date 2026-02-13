@@ -31,6 +31,19 @@ function summarizeToTitle(text: string): string {
     .replace(/\n+/g, " ")
     .trim();
 
+  // If it's a bullet list, take the first item
+  const bulletMatch = clean.match(/^[-•*]\s*(.+?)(?:\n|$)/);
+  if (bulletMatch) clean = bulletMatch[1].trim();
+
+  // If it starts with common task verbs, capitalize nicely
+  const verbMatch = clean.match(
+    /^(can you |please |i want you to |i need you to |go ahead and )/i,
+  );
+  if (verbMatch) clean = clean.slice(verbMatch[1].length).trim();
+
+  // Capitalize first letter
+  clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+
   if (clean.length <= 60) return clean;
   // Truncate at word boundary
   const truncated = clean.slice(0, 57).replace(/\s+\S*$/, "");
@@ -226,15 +239,20 @@ export async function POST() {
           .get(task.sessionId);
 
         // Determine status
+        // - inbox: task just came in, agent hasn't started yet or is between turns
+        // - in_progress: agent is ACTIVELY working right now (last activity < 60s)
+        // - done: agent clearly finished (long idle after last response)
         let status: string;
         const ageMs = now - task.lastActivityAt;
-        if (task.isAgentWorking) {
+        if (task.isAgentWorking && ageMs < 60 * 1000) {
+          // Agent actively running RIGHT NOW
           status = "in_progress";
-        } else if (ageMs < 5 * 60 * 1000) {
-          // Finished very recently — could still be working
-          status = "in_progress";
-        } else {
+        } else if (ageMs > 10 * 60 * 1000) {
+          // No activity for 10+ min — agent finished
           status = "done";
+        } else {
+          // Default: inbox (just arrived or between turns)
+          status = "inbox";
         }
 
         if (existing) {
