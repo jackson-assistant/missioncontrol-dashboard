@@ -55,10 +55,10 @@ export function useCron() {
 }
 
 export function useConfig() {
-  const { data, error, isLoading } = useSWR("/api/config", fetcher, {
+  const { data, error, isLoading, mutate } = useSWR("/api/config", fetcher, {
     refreshInterval: 60000,
   });
-  return { config: data, error: data?.error || error, isLoading };
+  return { config: data, error: data?.error || error, isLoading, mutate };
 }
 
 export function useLogs() {

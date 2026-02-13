@@ -21,8 +21,130 @@ function extractUserText(content: string): string {
   return content.replace(/\[message_id:\s*\d+\]/g, "").trim();
 }
 
-/** Summarize a user message into a short task title (max ~60 chars) */
-function summarizeToTitle(text: string): string {
+/** Generate an AI title for a task using Moonshot API */
+async function generateTitleWithAI(text: string, db: any, agentId: string, agentName: string): Promise<string> {
+  const startTime = Date.now();
+  try {
+    const apiKey = process.env.MOONSHOT_API_KEY;
+    if (!apiKey) {
+      console.error("[tasks/sync] MOONSHOT_API_KEY not set");
+      throw new Error("MOONSHOT_API_KEY not set");
+    }
+
+    console.log(`[tasks/sync] Calling Moonshot API for title generation (agent: ${agentId})...`);
+    
+    const response = await fetch("https://api.moonshot.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "kimi-latest",
+        max_tokens: 50,
+        temperature: 1,
+        messages: [
+          {
+            role: "system",
+            content: "You are a task title generator. Given a user request, output ONLY a short, concise task title (max 50 characters). No explanation, no quotes, no thinking - just the title."
+          },
+          {
+            role: "user",
+            content: `Task: """${text.slice(0, 500)}"""`
+          }
+        ],
+      }),
+    });
+
+    const durationMs = Date.now() - startTime;
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[tasks/sync] Moonshot API error: ${response.status} - ${errorText}`);
+      // Record failed API call
+      recordApiCall(db, {
+        agent_id: agentId,
+        agent_name: agentName,
+        model: "kimi-latest",
+        endpoint: "chat.completions",
+        tokens_in: 0,
+        tokens_out: 0,
+        cost: 0,
+        status: "error",
+        error_message: `API error: ${response.status} - ${errorText}`,
+        duration_ms: durationMs,
+      });
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("[tasks/sync] Moonshot API response:", JSON.stringify(data).slice(0, 300));
+    
+    // Record successful API call
+    const usage = data.usage || {};
+    recordApiCall(db, {
+      agent_id: agentId,
+      agent_name: agentName,
+      model: data.model || "kimi-latest",
+      endpoint: "chat.completions",
+      tokens_in: usage.prompt_tokens || 0,
+      tokens_out: usage.completion_tokens || 0,
+      cost: 0, // Moonshot doesn't return cost in the response
+      status: "success",
+      duration_ms: durationMs,
+      metadata: { purpose: "task_title_generation", input_length: text.length },
+    });
+    
+    // kimi-k2.5 may output to reasoning_content instead of content
+    const message = data.choices?.[0]?.message;
+    let title = (message?.content || message?.reasoning_content || "").trim()
+      .replace(/^["']|["']$/g, "")
+      .split("\n")[0]
+      .trim();
+
+    if (title && title.length > 3 && title.length <= 60) {
+      console.log(`[tasks/sync] Generated title: "${title}"`);
+      return title.charAt(0).toUpperCase() + title.slice(1);
+    }
+    console.log(`[tasks/sync] Invalid title format: "${title}"`);
+  } catch (err: any) {
+    console.error("[tasks/sync] Error generating AI title:", err.message);
+    // Fall back to simple summarization
+  }
+  return summarizeToTitleFallback(text);
+}
+
+/** Record an API call to the database */
+function recordApiCall(db: any, call: any) {
+  try {
+    const now = Date.now();
+    db.prepare(`
+      INSERT INTO api_calls (id, timestamp, agent_id, agent_name, model, endpoint, tokens_in, tokens_out, cost, status, error_message, session_id, duration_ms, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      randomUUID(),
+      now,
+      call.agent_id,
+      call.agent_name,
+      call.model,
+      call.endpoint,
+      call.tokens_in,
+      call.tokens_out,
+      call.cost,
+      call.status,
+      call.error_message || null,
+      call.session_id || null,
+      call.duration_ms,
+      JSON.stringify(call.metadata || {})
+    );
+    console.log(`[tasks/sync] Recorded API call: ${call.model} - ${call.status}`);
+  } catch (err: any) {
+    console.error("[tasks/sync] Failed to record API call:", err.message);
+  }
+}
+
+/** Fallback: Simple summarization when AI title generation fails */
+function summarizeToTitleFallback(text: string): string {
   // Strip markdown, urls, code blocks
   let clean = text
     .replace(/```[\s\S]*?```/g, "[code]")
@@ -79,11 +201,12 @@ interface SessionTask {
 }
 
 /** Parse a session JSONL file to extract the latest task */
-function parseSessionForTask(
+async function parseSessionForTask(
   sessionPath: string,
   agentId: string,
   agentName: string,
-): SessionTask | null {
+  db: any,
+): Promise<SessionTask | null> {
   if (!existsSync(sessionPath)) return null;
 
   try {
@@ -166,11 +289,14 @@ function parseSessionForTask(
     const ageMs = now - lastActivityAt;
     const isAgentWorking = ageMs < 3 * 60 * 1000 || lastAssistantHasToolCall;
 
+    // Generate AI title
+    const title = await generateTitleWithAI(lastUserMessage, db, agentId, agentName);
+
     return {
       sessionId,
       agentId,
       agentName,
-      title: summarizeToTitle(lastUserMessage),
+      title,
       description: lastUserMessage.length > 60 ? lastUserMessage.slice(0, 200) : "",
       userMessage: lastUserMessage,
       messageTimestamp: lastUserTimestamp,
@@ -195,6 +321,10 @@ function parseSessionForTask(
  * - Agent finished (last response was final, no recent activity) → done
  */
 export async function POST() {
+  // Disabled per user request - manual task creation only
+  return NextResponse.json({ synced: false, disabled: true, message: "Automatic sync disabled" });
+
+  /*
   try {
     const db = getDb();
     const now = Date.now();
@@ -228,7 +358,7 @@ export async function POST() {
         const agentName =
           agent.identityName || agent.name || agent.id;
 
-        const task = parseSessionForTask(sessionFile, agent.id, agentName);
+        const task = await parseSessionForTask(sessionFile, agent.id, agentName, db);
         if (!task) continue;
 
         // Check if we already track this session
@@ -330,4 +460,5 @@ export async function POST() {
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+  */
 }

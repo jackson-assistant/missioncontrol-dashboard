@@ -20,15 +20,21 @@ interface FeedItem {
 /** Extract a clean, human-readable summary from a log message */
 function cleanMessage(msg: string): string {
   // Strip JSON subsystem prefixes like {"subsystem":"agent/embedded"}
-  let clean = msg.replace(/^\{[^}]*\}\s*/, "");
+  // Handle both: {"subsystem":"..."} and JSON embedded in the message
+  let clean = msg.replace(/^\s*\{[^}]*\}\s*/, "");
+  clean = clean.replace(/^\s*"?\{\\"subsystem\\":\\"[^"]*\\"\}"?\s*/g, "");
+  clean = clean.replace(/\{\\"subsystem\\":\\"[^"]*\\"\}\s*/g, "");
+  clean = clean.replace(/\{"subsystem":"[^"]*"\}\s*/g, "");
   // Strip runId=xxx, toolCallId=xxx noise
   clean = clean.replace(/\s*runId=[a-f0-9-]+/g, "");
   clean = clean.replace(/\s*toolCallId=[a-zA-Z0-9_-]+/g, "");
   // Strip "embedded run" prefix — just show the action
   clean = clean.replace(/^embedded run\s+/, "");
+  // Clean up escaped quotes
+  clean = clean.replace(/\\"/g, '"');
   // Trim to reasonable length
   if (clean.length > 120) clean = clean.slice(0, 117) + "...";
-  return clean;
+  return clean.trim();
 }
 
 /** Extract agent name hint from log subsystem or message */
@@ -50,11 +56,16 @@ function classifyLog(log: any): { category: "activity" | "system" | "noise"; ico
   if (msg.includes("plugin cli register")) return { category: "noise", icon: "" };
   if (msg.includes("already registered")) return { category: "noise", icon: "" };
   if (msg.includes("already running")) return { category: "noise", icon: "" };
-  if (msg.startsWith("{") && !msg.includes("embedded run")) return { category: "noise", icon: "" };
   if (msg.length < 5) return { category: "noise", icon: "" };
 
-  // Debug level — all noise. Agent/tool events are too granular for a feed.
-  if (level === "debug") return { category: "noise", icon: "" };
+  // Debug level — filter some but keep useful ones
+  if (level === "debug") {
+    // Keep tool execution activity
+    if (msg.includes("tool start") || msg.includes("tool end")) {
+      return { category: "activity", icon: "🔧" };
+    }
+    return { category: "noise", icon: "" };
+  }
 
   // Errors and warnings — show but as system
   if (level === "error") return { category: "system", icon: "❌" };

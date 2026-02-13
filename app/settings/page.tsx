@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Settings,
   Key,
@@ -34,26 +34,50 @@ const sidebarSections = [
   { id: "notifications", label: "Notifications", icon: Bell },
 ];
 
-export default function SettingsPage() {
-  const { config, isLoading: configLoading } = useConfig();
+// Default settings
+const defaultSettings = {
+  timezone: "Australia/Sydney",
+  dateFormat: "DD/MM/YYYY",
+  autoRefreshInterval: 30,
+  lowBalanceThreshold: 10,
+  agentOfflineTimeout: 15,
+};
 
-  const [localSettings, setLocalSettings] = useState({
-    timezone: "Australia/Sydney",
-    dateFormat: "DD/MM/YYYY",
-    autoRefreshInterval: 30,
-    lowBalanceThreshold: 10,
-    agentOfflineTimeout: 15,
-  });
+export default function SettingsPage() {
+  const { config, isLoading: configLoading, mutate: refreshConfig } = useConfig();
+
+  const [localSettings, setLocalSettings] = useState(defaultSettings);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Load settings from API on mount
+  useEffect(() => {
+    if (config?.settings) {
+      setLocalSettings({ ...defaultSettings, ...config.settings });
+    }
+  }, [config?.settings]);
 
   const updateLocal = (key: string, value: unknown) => {
     setLocalSettings((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(localSettings),
+      });
+      setSaved(true);
+      refreshConfig();
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Extract live data
@@ -95,11 +119,16 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground">
               Live configuration from OpenClaw gateway
             </p>
-            <Button size="sm" onClick={handleSave}>
+            <Button size="sm" onClick={handleSave} disabled={saving}>
               {saved ? (
                 <>
                   <Check className="h-3.5 w-3.5" />
                   Saved
+                </>
+              ) : saving ? (
+                <>
+                  <Save className="h-3.5 w-3.5 animate-pulse" />
+                  Saving...
                 </>
               ) : (
                 <>
