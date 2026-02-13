@@ -1,44 +1,69 @@
 "use client";
 
-import { useAgents } from "@/lib/hooks";
-import { mapApiAgent } from "@/lib/data";
 import { Panel } from "@/components/shared/panel";
 import { EmptyState } from "@/components/shared/empty-state";
 
-export function UsageByAgent() {
-  const { agents: rawAgents, isLoading } = useAgents();
-  const agents = rawAgents.map(mapApiAgent);
+interface AgentUsage {
+  agent_id: string;
+  agent_name: string;
+  total_calls: number;
+  total_tokens: number;
+  total_cost: number;
+}
+
+export function UsageByAgent({
+  byAgent,
+  isLoading,
+}: {
+  byAgent: AgentUsage[];
+  isLoading: boolean;
+}) {
+  const maxCost = Math.max(...byAgent.map((a) => a.total_cost), 0.01);
 
   return (
     <Panel>
       <h2 className="text-sm font-bold text-foreground">Usage by Agent</h2>
-      <p className="text-xs text-muted-foreground">
-        API usage tracking not yet available
-      </p>
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-4 space-y-3">
         {isLoading ? (
           [1, 2, 3].map((i) => (
-            <div key={i} className="h-16 animate-pulse rounded bg-muted" />
+            <div key={i} className="h-10 animate-pulse rounded bg-muted" />
           ))
-        ) : agents.length > 0 ? (
-          agents.map((agent) => (
-            <div key={agent.id} className="text-center">
-              <div
-                className="mx-auto flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ backgroundColor: agent.color }}
-              >
-                {agent.avatar}
+        ) : byAgent.length > 0 ? (
+          byAgent.map((agent) => (
+            <div key={agent.agent_id}>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-subtle">
+                  {agent.agent_name || agent.agent_id}
+                </span>
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <span>{agent.total_calls} calls</span>
+                  <span>
+                    {agent.total_tokens >= 1000
+                      ? `${(agent.total_tokens / 1000).toFixed(0)}K`
+                      : agent.total_tokens}{" "}
+                    tokens
+                  </span>
+                  <span className="font-medium text-foreground">
+                    ${agent.total_cost.toFixed(4)}
+                  </span>
+                </div>
               </div>
-              <p className="mt-1.5 text-xs font-medium text-subtle">
-                {agent.name}
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                {agent.status}
-              </p>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-blue-500 transition-all"
+                  style={{
+                    width: `${(agent.total_cost / maxCost) * 100}%`,
+                  }}
+                />
+              </div>
             </div>
           ))
         ) : (
-          <EmptyState message="No agents" className="col-span-3 py-4" />
+          <EmptyState
+            message="No usage data yet"
+            hint="API calls will appear here once tracked"
+            className="py-6"
+          />
         )}
       </div>
     </Panel>

@@ -72,3 +72,28 @@ export function useLogs() {
     mutate,
   };
 }
+
+export function useTasks(status?: string) {
+  const params = status ? `?status=${status}` : "";
+  const { data, error, isLoading, mutate } = useSWR(`/api/tasks${params}`, fetcher, {
+    refreshInterval: 10000,
+  });
+  return {
+    tasks: Array.isArray(data) ? data : [],
+    error: data?.error || error,
+    isLoading,
+    mutate,
+  };
+}
+
+export function useUsage(period: string = "today") {
+  const { data, error, isLoading, mutate } = useSWR(`/api/usage?period=${period}`, fetcher, {
+    refreshInterval: 30000,
+  });
+  return {
+    usage: data,
+    error: data?.error || error,
+    isLoading,
+    mutate,
+  };
+}
