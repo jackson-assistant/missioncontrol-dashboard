@@ -13,51 +13,73 @@ interface FeedItem {
   time: string;
   subsystem: string;
   category: "activity" | "system" | "noise";
+  icon: string;
+  agentHint: string;
 }
 
-/** Classify a log entry as meaningful activity vs noise */
-function classifyLog(log: any): "activity" | "system" | "noise" {
-  const msg = (log.message || "").trim();
-  const msgLower = msg.toLowerCase();
+/** Extract a clean, human-readable summary from a log message */
+function cleanMessage(msg: string): string {
+  // Strip JSON subsystem prefixes like {"subsystem":"agent/embedded"}
+  let clean = msg.replace(/^\{[^}]*\}\s*/, "");
+  // Trim to reasonable length
+  if (clean.length > 150) clean = clean.slice(0, 147) + "...";
+  return clean;
+}
+
+/** Extract agent name hint from log subsystem or message */
+function extractAgent(msg: string, subsystem: string): string {
+  // Check for agent ID in message
+  const agentMatch = msg.match(/agent[=: ]+(\w+)/i);
+  if (agentMatch) return agentMatch[1];
+  if (subsystem.includes("/")) return subsystem.split("/")[0];
+  return subsystem;
+}
+
+/** Classify and enrich a log entry */
+function classifyLog(log: any): { category: "activity" | "system" | "noise"; icon: string } {
+  const msg = (log.message || "").toLowerCase();
   const level = log.level;
+  const subsystem = (log.subsystem || "").toLowerCase();
 
-  // Skip debug-level noise
-  if (level === "debug") return "noise";
+  // Always noise
+  if (msg.includes("plugin cli register")) return { category: "noise", icon: "" };
+  if (msg.includes("already registered")) return { category: "noise", icon: "" };
+  if (msg.includes("already running")) return { category: "noise", icon: "" };
+  if (msg.startsWith("{") && !msg.includes("embedded run")) return { category: "noise", icon: "" };
+  if (msg.length < 5) return { category: "noise", icon: "" };
 
-  // Skip error spam (gateway restart attempts, port conflicts, etc.)
-  if (level === "error") return "noise";
+  // Debug noise — skip most debug, but keep agent activity debug
+  if (level === "debug") {
+    if (msg.includes("embedded run agent start")) return { category: "activity", icon: "🚀" };
+    if (msg.includes("embedded run agent end")) return { category: "activity", icon: "✅" };
+    if (msg.includes("embedded run tool start")) return { category: "activity", icon: "🔧" };
+    if (msg.includes("embedded run tool end")) return { category: "activity", icon: "🔧" };
+    return { category: "noise", icon: "" };
+  }
 
-  // Skip warning noise
-  if (level === "warn") return "noise";
+  // Errors and warnings — show but as system
+  if (level === "error") return { category: "system", icon: "❌" };
+  if (level === "warn") return { category: "system", icon: "⚠️" };
 
-  // Skip messages that are JSON objects/arrays (CLI stdout captured as logs)
-  if (msg.startsWith("{") || msg.startsWith("[") || msg.startsWith("{\n")) return "noise";
+  // Agent activity patterns
+  if (msg.includes("session") && (msg.includes("start") || msg.includes("created"))) return { category: "activity", icon: "📋" };
+  if (msg.includes("session") && msg.includes("end")) return { category: "activity", icon: "🏁" };
+  if (msg.includes("agent") && msg.includes("turn")) return { category: "activity", icon: "🤖" };
+  if (msg.includes("agent") && msg.includes("spawn")) return { category: "activity", icon: "🧬" };
+  if (msg.includes("message") && (msg.includes("received") || msg.includes("incoming"))) return { category: "activity", icon: "📨" };
+  if (msg.includes("message") && (msg.includes("sent") || msg.includes("deliver"))) return { category: "activity", icon: "📤" };
+  if (msg.includes("heartbeat")) return { category: "activity", icon: "💓" };
+  if (msg.includes("cron") || msg.includes("scheduled")) return { category: "activity", icon: "⏰" };
+  if (msg.includes("tool") && (msg.includes("call") || msg.includes("exec"))) return { category: "activity", icon: "🔧" };
+  if (msg.includes("channel") && (msg.includes("connect") || msg.includes("start"))) return { category: "activity", icon: "📡" };
+  if (msg.includes("gateway") && (msg.includes("start") || msg.includes("ready"))) return { category: "activity", icon: "🟢" };
+  if (msg.includes("gateway") && msg.includes("restart")) return { category: "activity", icon: "🔄" };
+  if (msg.includes("webhook")) return { category: "activity", icon: "🔗" };
+  if (msg.includes("model") && msg.includes("switch")) return { category: "activity", icon: "🔀" };
+  if (msg.includes("compaction") || msg.includes("compact")) return { category: "system", icon: "📦" };
 
-  // Skip very short or empty messages
-  if (msg.length < 5) return "noise";
-
-  // Skip CLI output patterns
-  if (msgLower.includes("openclaw") && (msgLower.includes("gateway stop") || msgLower.includes("systemctl"))) return "noise";
-  if (msgLower.includes("plugin cli register")) return "noise";
-  if (msgLower.includes("already running") || msgLower.includes("already registered")) return "noise";
-  if (msgLower.includes("port") && msgLower.includes("in use")) return "noise";
-
-  // Meaningful activity patterns
-  if (msgLower.includes("session") && (msgLower.includes("start") || msgLower.includes("end") || msgLower.includes("created"))) return "activity";
-  if (msgLower.includes("agent") && (msgLower.includes("turn") || msgLower.includes("run") || msgLower.includes("spawn"))) return "activity";
-  if (msgLower.includes("message") && (msgLower.includes("received") || msgLower.includes("sent") || msgLower.includes("deliver"))) return "activity";
-  if (msgLower.includes("heartbeat")) return "activity";
-  if (msgLower.includes("cron") || msgLower.includes("scheduled")) return "activity";
-  if (msgLower.includes("tool") && (msgLower.includes("call") || msgLower.includes("exec"))) return "activity";
-  if (msgLower.includes("channel") && (msgLower.includes("connect") || msgLower.includes("start") || msgLower.includes("stop"))) return "activity";
-  if (msgLower.includes("gateway") && (msgLower.includes("start") || msgLower.includes("ready") || msgLower.includes("restart"))) return "activity";
-  if (msgLower.includes("webhook")) return "activity";
-  if (msgLower.includes("model") && msgLower.includes("switch")) return "activity";
-
-  // Remaining info that isn't caught — show as system only if not JSON-like
-  if (level === "info") return "system";
-
-  return "noise";
+  if (level === "info") return { category: "system", icon: "ℹ️" };
+  return { category: "noise", icon: "" };
 }
 
 export function LiveFeed() {
@@ -66,32 +88,32 @@ export function LiveFeed() {
 
   const feedItems = useMemo(() => {
     return logs
-      .map((log: any, i: number) => ({
-        id: `feed-${i}`,
-        level: log.level,
-        message: log.message,
-        time: log.time
-          ? new Date(log.time).toLocaleTimeString("en-US", {
-              hour12: false,
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            })
-          : "",
-        subsystem: log.subsystem || "system",
-        category: classifyLog(log),
-      }))
+      .map((log: any, i: number) => {
+        const { category, icon } = classifyLog(log);
+        return {
+          id: `feed-${i}`,
+          level: log.level,
+          message: cleanMessage(log.message || ""),
+          time: log.time
+            ? new Date(log.time).toLocaleTimeString("en-US", {
+                hour12: false,
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })
+            : "",
+          subsystem: log.subsystem || "system",
+          category,
+          icon,
+          agentHint: extractAgent(log.message || "", log.subsystem || ""),
+        };
+      })
       .filter((item: FeedItem) => showAll || item.category !== "noise");
   }, [logs, showAll]);
 
-  const levelDot: Record<string, string> = {
-    error: "bg-rose-500",
-    warn: "bg-amber-500",
-    debug: "bg-stone-400",
-    info: "bg-blue-400",
-  };
-
-  const activityCount = feedItems.filter((f: FeedItem) => f.category === "activity").length;
+  const activityCount = feedItems.filter(
+    (f: FeedItem) => f.category === "activity",
+  ).length;
 
   return (
     <aside className="hidden w-[320px] shrink-0 flex-col border-l border-dashed bg-stone-50/50 dark:bg-zinc-800/60 lg:flex">
@@ -100,7 +122,8 @@ export function LiveFeed() {
       {/* Filter toggle */}
       <div className="flex items-center justify-between border-b border-dashed px-4 py-2">
         <span className="text-[10px] font-medium text-muted-foreground">
-          {feedItems.length} entries{activityCount > 0 ? ` · ${activityCount} activity` : ""}
+          {feedItems.length} entries
+          {activityCount > 0 ? ` · ${activityCount} activity` : ""}
         </span>
         <button
           onClick={() => setShowAll(!showAll)}
@@ -120,32 +143,41 @@ export function LiveFeed() {
           {logsLoading && feedItems.length === 0 ? (
             <div className="space-y-2 p-4">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-8 animate-pulse rounded bg-muted" />
+                <div
+                  key={i}
+                  className="h-8 animate-pulse rounded bg-muted"
+                />
               ))}
             </div>
           ) : feedItems.length > 0 ? (
             feedItems.map((item: FeedItem) => (
               <div
                 key={item.id}
-                className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-stone-100/50 dark:hover:bg-zinc-800/50"
+                className="flex items-start gap-2.5 px-4 py-2.5 transition-colors hover:bg-stone-100/50 dark:hover:bg-zinc-800/50"
               >
-                <span
-                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${levelDot[item.level] || "bg-stone-400"}`}
-                />
+                <span className="mt-0.5 w-4 shrink-0 text-center text-xs">
+                  {item.icon}
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs leading-relaxed text-subtle break-all">
+                  <p className="text-[11px] leading-relaxed text-subtle break-all">
                     {item.message}
                   </p>
-                  <span className="mt-0.5 block text-[10px] text-muted-foreground">
-                    {item.subsystem} &middot; {item.time}
-                  </span>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <span className="font-medium">{item.agentHint}</span>
+                    <span>·</span>
+                    <span>{item.time}</span>
+                  </div>
                 </div>
               </div>
             ))
           ) : (
             <EmptyState
-              message={showAll ? "No logs available" : "No agent activity yet"}
-              hint={!showAll ? "Toggle 'All' to see system logs" : undefined}
+              message={
+                showAll ? "No logs available" : "No agent activity yet"
+              }
+              hint={
+                !showAll ? "Toggle 'All' to see system logs" : undefined
+              }
               className="py-8"
             />
           )}

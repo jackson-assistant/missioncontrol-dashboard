@@ -93,6 +93,5 @@ export function mapApiAgent(apiAgent: any): Agent {
 export const COLUMN_CONFIG: { key: TaskStatus; label: string }[] = [
   { key: "inbox", label: "INBOX" },
   { key: "in_progress", label: "IN PROGRESS" },
-  { key: "review", label: "REVIEW" },
   { key: "done", label: "DONE" },
 ];
